@@ -2,8 +2,26 @@
 const AdminData = {
   async load() {
     let records = [], error = null;
-    try { records = await FirebaseService.fetchQuizRecords(); }
-    catch (e) { error = e; console.error('Error fetching records from Firebase:', e); }
+    try {
+      records = await FirebaseService.fetchQuizRecords();
+      if (Array.isArray(records)) {
+        localStorage.setItem('cached_quiz_records', JSON.stringify(records));
+      }
+    } catch (e) {
+      error = e;
+      console.error('Error fetching records from Firebase:', e);
+      // Fallback: load pending local records + cached records
+      try {
+        const cached = JSON.parse(localStorage.getItem('cached_quiz_records') || '[]');
+        const pending = JSON.parse(localStorage.getItem(APP.KEYS.PENDING) || '[]');
+        const map = new Map();
+        cached.forEach((r) => map.set(r.id, r));
+        pending.forEach((r) => map.set(r.id, r));
+        records = Array.from(map.values());
+      } catch (err) {
+        records = [];
+      }
+    }
     return { records, users: Auth.getUsers(), error };
   },
 
@@ -12,8 +30,17 @@ const AdminData = {
     const run = async () => {
       const data = await this.load();
       if (errorEl) {
-        if (data.error) FormKit.banner(errorEl, 'Could not load quiz records from Firebase. Check your internet connection and Firestore rules, then press Refresh.', 'error');
-        else FormKit.hide(errorEl);
+        if (data.error) {
+          const isPerm = String(data.error.message || '').toLowerCase().includes('permission') ||
+                         String(data.error.code || '').toLowerCase().includes('permission');
+          const countMsg = data.records.length ? `Showing ${data.records.length} saved local submission(s). ` : '';
+          const msg = isPerm
+            ? `Firestore Permission Denied (Rules Expired). ${countMsg}To connect live Firebase, update your Firestore Security Rules in Firebase Console to 'allow read, write: if true;'.`
+            : `Could not load quiz records from Firebase. ${countMsg}Check your internet connection and Firestore rules, then press Refresh.`;
+          FormKit.banner(errorEl, msg, data.records.length ? 'info' : 'error');
+        } else {
+          FormKit.hide(errorEl);
+        }
       }
       render(data);
     };

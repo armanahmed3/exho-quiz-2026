@@ -40,7 +40,28 @@
         </div>
       </div>
 
-      <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-4 border-rose-200">
+      <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-3 border-amber-200 bg-amber-50/40">
+        <div class="flex items-center gap-2 text-amber-800 font-bold font-display text-sm sm:text-base border-b border-amber-200 pb-2">
+          <i class="fa-solid fa-shield-halved text-amber-600"></i>
+          <span>Firestore Security Rules (Fix Permission Denied)</span>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Firebase test rules automatically expire after 30 days. To allow students to save scores and the admin panel to load live records, open your <strong>Firebase Console &gt; Firestore Database &gt; Rules</strong> tab and publish:
+        </p>
+        <pre class="bg-slate-900 text-sky-300 p-3 rounded-xl text-[11px] sm:text-xs font-mono overflow-x-auto select-all leading-relaxed">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}</pre>
+        <p class="text-[11px] text-slate-500">
+          After clicking <strong>Publish</strong> in Firebase Console, click the <strong>Refresh</strong> button above to connect immediately.
+        </p>
+      </div>
+
+      <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-4 border-rose-200 lg:col-span-2">
         <h2 class="font-display text-base sm:text-lg font-bold text-rose-600 flex items-center gap-2 border-b border-rose-200 pb-2"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone - Reset Quiz Data</h2>
         <p class="text-xs sm:text-sm text-slate-600">Permanently deletes <strong>every</strong> student quiz record and vote from Firebase. This cannot be undone.</p>
         <form id="resetForm" novalidate class="space-y-3" autocomplete="off">
