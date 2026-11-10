@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Add your tab logo here -->
+  <link rel="icon" type="image/png" href="../assets/img/logo.png?v=1">
+  <title>Login - The Times School Network Exhibition 2026</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../assets/js/config/tailwind.config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="../assets/css/app.css" />
+</head>
+<body class="bg-slate-50 text-brandBlue font-sans min-h-screen flex flex-col justify-between selection:bg-brandBlue selection:text-white" data-base="../" data-page="login">
+
+  <div id="site-navbar"></div>
+
+  <main class="container mx-auto px-3 sm:px-4 pt-24 sm:pt-28 pb-10 sm:pb-12 flex-grow max-w-lg flex items-center justify-center">
+    <div class="glass-card enter rounded-2xl p-5 sm:p-6 md:p-8 w-full space-y-5 sm:space-y-6">
+      <div class="text-center space-y-2">
+        <div class="inline-flex p-3 rounded-full bg-blue-50 text-brandBlue border border-blue-200 text-2xl mb-1"><i class="fa-solid fa-right-to-bracket"></i></div>
+        <h1 class="font-display text-2xl md:text-3xl font-extrabold text-brandBlue">Welcome Back</h1>
+      </div>
+
+      <div id="formBanner" class="hidden" role="status" aria-live="polite"></div>
+
+      <form id="loginForm" novalidate class="space-y-4" autocomplete="on">
+        <div data-field>
+          <label class="label" for="identifier">Username / Email</label>
+          <input class="input" type="text" id="identifier" name="identifier" data-rule="loginId" maxlength="60" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Enter username or email..." required>
+        </div>
+        <div data-field>
+          <label class="label" for="password">Password</label>
+          <div class="relative">
+            <input class="input pr-11" type="password" id="password" name="password" data-rule="loginPassword" maxlength="64" autocomplete="current-password" placeholder="Enter password..." required>
+            <button type="button" data-toggle-password="password" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brandBlue" aria-label="Show or hide password"><i class="fa-solid fa-eye"></i></button>
+          </div>
+        </div>
+        <button type="submit" id="loginBtn" class="btn-primary w-full"><i class="fa-solid fa-right-to-bracket"></i><span>Login Now</span></button>
+      </form>
+
+      <div class="text-center text-xs text-slate-500 pt-2 border-t border-slate-200">
+        New here? <a href="signup.html" class="text-brandBlue font-bold hover:underline">Create an account</a>
+        &nbsp;|&nbsp; <a href="../index.html" class="text-brandBlue font-bold hover:underline">Back to Home</a>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="../assets/js/config/constants.js"></script>
+  <script src="../assets/js/core/utils.js"></script>
+  <script src="../assets/js/core/validators.js"></script>
+  <script src="../assets/js/core/form-kit.js"></script>
+  <script src="../assets/js/firebase.js"></script>
+  <script src="../assets/js/core/auth.js"></script>
+  <script src="../assets/js/core/layout.js"></script>
+  <script src="../assets/js/pages/login.js"></script>
+</body>
+</html>

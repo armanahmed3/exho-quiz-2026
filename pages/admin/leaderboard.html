@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <!-- Add your tab logo here -->
+  <link rel="icon" type="image/png" href="../assets/img/logo.png?v=1">
+  <title>Student Leaderboard | The Times School Network</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../../assets/js/config/tailwind.config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <link rel="stylesheet" href="../../assets/css/app.css" />
+  <!-- Admin guard: must run before the page renders -->
+  <script src="../../assets/js/config/constants.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script>Auth.requireAdmin();</script>
+</head>
+<body class="admin-body font-sans text-slate-800" data-base="../../" data-admin-page="leaderboard">
+
+  <div id="page-content" data-title="Student Leaderboard" data-subtitle="Every quiz result, ranked and filterable">
+    <div id="dataError" class="hidden" role="alert"></div>
+
+    <section class="glass-card p-4 sm:p-6 rounded-2xl space-y-4 sm:space-y-5">
+      <h2 class="font-display text-base sm:text-lg font-bold text-brandBlue flex items-center gap-2"><i class="fa-solid fa-trophy text-amber-500"></i> Student Leaderboard (Highest Marks First)</h2>
+
+      <form id="filterForm" novalidate class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3 items-end">
+        <div data-field class="lg:col-span-2"><label class="label" for="fSearch">Search student</label>
+          <input class="input" type="search" id="fSearch" name="search" data-rule="searchText" maxlength="40" placeholder="Type a name..." autocomplete="off"></div>
+        <div><label class="label" for="fClass">Class</label>
+          <select class="input" id="fClass" name="class"><option value="">All classes</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option></select></div>
+        <div><label class="label" for="fSubject">Subject</label>
+          <select class="input" id="fSubject" name="subject"><option value="">All subjects</option><option value="english">English</option><option value="computer">Computer</option><option value="biology">Biology</option><option value="history">History</option><option value="geography">Geography</option><option value="physics">Physics</option><option value="chemistry">Chemistry</option><option value="science">Science</option><option value="maths">Maths</option><option value="islamiat">Islamiat</option></select></div>
+        <div><label class="label" for="fStatus">Status</label>
+          <select class="input" id="fStatus" name="status"><option value="">All</option><option value="strong">Strong (8+)</option><option value="needs">Needs improvement</option></select></div>
+      </form>
+
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span id="resultCount" class="text-xs font-bold px-3 py-1 bg-blue-100 text-brandBlue rounded-full">0 results</span>
+        <button type="button" id="exportCsv" class="btn-ghost text-xs"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+      </div>
+
+      <div class="table-wrap"><table class="data-table">
+        <thead><tr><th># Rank</th><th>Student Name</th><th>Class</th><th>Subject</th><th>Marks</th><th>Voted Teacher</th><th>Voted Sir</th><th>Performance Status</th></tr></thead>
+        <tbody id="adminResultsTableBody"></tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/validators.js"></script>
+  <script src="../../assets/js/core/form-kit.js"></script>
+  <script src="../../assets/js/firebase.js"></script>
+  <script src="../../assets/js/admin/admin-layout.js"></script>
+  <script src="../../assets/js/admin/admin-data.js"></script>
+  <script src="../../assets/js/admin/leaderboard.js"></script>
+</body>
+</html>

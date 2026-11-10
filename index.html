@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Add your tab logo here -->
+  <link rel="icon" type="image/png" href="assets/img/logo.png?v=1">
+  <title>Exhibition Quiz &amp; Student Voting System - The Times School Network</title>
+  <meta name="description" content="Class-wise timed quizzes and teacher appreciation voting for the Annual Computer Science Exhibition 2026 at The Times School Network." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/js/config/tailwind.config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="assets/css/app.css" />
+</head>
+
+<body class="bg-white text-slate-800 font-sans min-h-screen flex flex-col justify-between selection:bg-brandBlue selection:text-white overflow-x-hidden" data-base="" data-page="home">
+
+  <!-- NAVBAR (injected by assets/js/core/layout.js) -->
+  <div id="site-navbar"></div>
+
+  <!-- HERO SECTION -->
+  <section class="hero-bg pt-28 sm:pt-36 pb-14 sm:pb-20 px-4 sm:px-6 border-b border-slate-100">
+    <div class="max-w-6xl mx-auto text-center space-y-6 sm:space-y-8 animate-on-scroll fade-up">
+      
+      <div class="inline-flex items-center gap-2 bg-blue-100 border border-blue-200 text-brandBlue px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest animate-bounce max-w-full">
+        <i class="fa-solid fa-sparkles text-sky-600"></i>
+        <span class="truncate">Annual Computer Science Exhibition 2026</span>
+      </div>
+
+      <h1 class="font-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black gradient-heading tracking-tight leading-tight max-w-4xl mx-auto break-words">
+        Exhibition Quiz & Student Voting System
+      </h1>
+
+      <p class="text-slate-600 text-sm sm:text-lg md:text-xl max-w-3xl mx-auto leading-relaxed px-2">
+        An interactive, fully-automated school exhibition platform designed for <strong class="text-brandBlue">The Times School Network</strong>. Experience class-wise smart quizzes, instant timer evaluations, and direct teacher appreciation voting.
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-4 w-full sm:w-auto">
+        <!-- Direct Quiz Access Button linked to Auth Modal -->
+        <a href="pages/quiz.html" class="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-brandBlue hover:bg-brandBlueHover text-white font-display font-bold text-base sm:text-lg shadow-xl shadow-blue-900/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3">
+          <span>Start Quiz & Access Portal</span>
+          <i class="fa-solid fa-circle-play"></i>
+        </a>
+        <a href="#features" class="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-base sm:text-lg border border-slate-300 shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-circle-info text-brandBlueLight"></i>
+          <span>Learn More</span>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- STATS BAR -->
+  <section class="bg-brandBlue text-white py-6 sm:py-8 px-4 sm:px-6 shadow-inner">
+    <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
+      <div class="space-y-1 animate-on-scroll fade-up">
+        <h3 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-sky-300">4 Classes</h3>
+        <p class="text-[10px] sm:text-xs text-blue-200 uppercase font-semibold">Class 7 to Class 10</p>
+      </div>
+      <div class="space-y-1 animate-on-scroll fade-up">
+        <h3 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-sky-300">10 Subjects</h3>
+        <p class="text-[10px] sm:text-xs text-blue-200 uppercase font-semibold">Comprehensive Question Banks</p>
+      </div>
+      <div class="space-y-1 animate-on-scroll fade-up">
+        <h3 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-sky-300">90 Seconds</h3>
+        <p class="text-[10px] sm:text-xs text-blue-200 uppercase font-semibold">Live Timed Assessment</p>
+      </div>
+      <div class="space-y-1 animate-on-scroll fade-up">
+        <h3 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-sky-300">Real-Time</h3>
+        <p class="text-[10px] sm:text-xs text-blue-200 uppercase font-semibold">Firebase Cloud Data Sync</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES SECTION -->
+  <section id="features" class="py-14 sm:py-20 px-4 sm:px-6 bg-slate-50 border-t border-b border-slate-200">
+    <div class="max-w-6xl mx-auto space-y-8 sm:space-y-12">
+      <div class="text-center space-y-3 animate-on-scroll fade-up">
+        <span class="text-xs font-bold uppercase tracking-widest text-brandBlueLight bg-blue-100 px-3 py-1 rounded-full">Core Features</span>
+        <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-brandBlue">What Makes This Software VIP?</h2>
+        <p class="text-slate-600 text-xs sm:text-sm max-w-xl mx-auto">Built using cutting-edge web technologies including Tailwind CSS and Firebase Firestore.</p>
+      </div>
+
+      <!-- Features Grid: 4 Cards (2x2 Grid) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 max-w-4xl mx-auto">
+        <div class="feature-card bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 space-y-4 animate-on-scroll fade-left">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 text-brandBlue flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <h3 class="font-display font-bold text-base sm:text-lg text-brandBlue">Class-Specific Curriculum</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">Dedicated question banks for Class 7, Class 8, Class 9, and Class 10 covering Computer, Science, Maths, Physics, Chemistry, English, Islamiat, and more.</p>
+        </div>
+
+        <div class="feature-card bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 space-y-4 animate-on-scroll fade-right">
+          <div class="w-12 h-12 rounded-xl bg-sky-100 text-accentSky flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-stopwatch"></i>
+          </div>
+          <h3 class="font-display font-bold text-base sm:text-lg text-brandBlue">Automated 90s Countdown</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">Dynamic visual timer progress bar automatically submits student answers when time runs out, preventing delays during exhibition demos.</p>
+        </div>
+
+        <div class="feature-card bg-white p-6 rounded-2xl border border-slate-200 space-y-4 animate-on-scroll fade-left">
+          <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-check-to-slot"></i>
+          </div>
+          <h3 class="font-display font-bold text-lg text-brandBlue">Dual Voting System</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">Integrated voting portal allowing students to submit 1 vote for their preferred Teacher and 1 vote for their Sir after completing their quiz.</p>
+        </div>
+
+        <div class="feature-card bg-white p-6 rounded-2xl border border-slate-200 space-y-4 animate-on-scroll fade-right">
+          <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-mobile-screen-button"></i>
+          </div>
+          <h3 class="font-display font-bold text-lg text-brandBlue">Fully Responsive Layout</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">Glassmorphism UI tailored with smooth Tailwind animations, perfectly suitable for touch-screen laptops, tablets, and phones.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS SECTION -->
+  <section id="how-it-works" class="py-14 sm:py-20 px-4 sm:px-6 max-w-6xl mx-auto space-y-8 sm:space-y-12">
+    <div class="text-center space-y-3 animate-on-scroll fade-up">
+      <span class="text-xs font-bold uppercase tracking-widest text-brandBlueLight bg-blue-50 px-3 py-1 rounded-full">Step-By-Step Workflow</span>
+      <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-brandBlue">How The Portal Works</h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative">
+      <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 text-center space-y-3 relative animate-on-scroll zoom-in">
+        <div class="w-10 h-10 rounded-full bg-brandBlue text-white font-black text-lg mx-auto flex items-center justify-center">1</div>
+        <h4 class="font-display font-bold text-base text-brandBlue">Register & Login</h4>
+        <p class="text-xs text-slate-500">Create an account or log in to unlock access to the exhibition index dashboard.</p>
+      </div>
+
+      <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 text-center space-y-3 relative animate-on-scroll zoom-in">
+        <div class="w-10 h-10 rounded-full bg-brandBlue text-white font-black text-lg mx-auto flex items-center justify-center">2</div>
+        <h4 class="font-display font-bold text-base text-brandBlue">Attempt MCQs</h4>
+        <p class="text-xs text-slate-500">Solve 10 class-specific randomized questions within 90 seconds.</p>
+      </div>
+
+      <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 text-center space-y-3 relative animate-on-scroll zoom-in">
+        <div class="w-10 h-10 rounded-full bg-brandBlue text-white font-black text-lg mx-auto flex items-center justify-center">3</div>
+        <h4 class="font-display font-bold text-base text-brandBlue">Vote Teachers</h4>
+        <p class="text-xs text-slate-500">View quiz score and submit appreciation votes for Teachers & Sirs.</p>
+      </div>
+
+      <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 text-center space-y-3 relative animate-on-scroll zoom-in">
+        <div class="w-10 h-10 rounded-full bg-brandBlue text-white font-black text-lg mx-auto flex items-center justify-center">4</div>
+        <h4 class="font-display font-bold text-base text-brandBlue">Cloud Sync</h4>
+        <p class="text-xs text-slate-500">Record auto-saves securely to Firebase Firestore.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEVELOPERS SECTION -->
+  <section id="team" class="py-14 sm:py-20 px-4 sm:px-6 bg-slate-900 text-white">
+    <div class="max-w-6xl mx-auto space-y-8 sm:space-y-12">
+      <div class="text-center space-y-3 animate-on-scroll fade-up">
+        <span class="text-xs font-bold uppercase tracking-widest text-sky-400 bg-sky-950 px-3 py-1 rounded-full border border-sky-800">Project Creators</span>
+        <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-white">Meet The Team & Supervisor</h2>
+        <p class="text-slate-400 text-xs sm:text-sm max-w-lg mx-auto">Computer Science Annual Exhibition 2026 Student Team</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="bg-slate-800/80 p-5 sm:p-6 rounded-2xl border border-slate-700 text-center space-y-3 animate-on-scroll fade-left">
+          <div class="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-blue-600/30 text-sky-300 text-xl sm:text-2xl flex items-center justify-center mx-auto border border-sky-500/30">
+            <i class="fa-solid fa-code"></i>
+          </div>
+          <h4 class="font-display font-bold text-base sm:text-lg text-white">Hasnain</h4>
+          <span class="text-[11px] text-sky-400 font-bold uppercase tracking-wider block">Lead Developer</span>
+        </div>
+
+        <div class="bg-slate-800/80 p-5 sm:p-6 rounded-2xl border border-slate-700 text-center space-y-3 animate-on-scroll fade-up">
+          <div class="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-blue-600/30 text-sky-300 text-xl sm:text-2xl flex items-center justify-center mx-auto border border-sky-500/30">
+            <i class="fa-solid fa-laptop-code"></i>
+          </div>
+          <h4 class="font-display font-bold text-base sm:text-lg text-white">Arham</h4>
+          <span class="text-[11px] text-sky-400 font-bold uppercase tracking-wider block">Co-Developer</span>
+        </div>
+
+        <div class="bg-slate-800/80 p-5 sm:p-6 rounded-2xl border border-slate-700 text-center space-y-3 animate-on-scroll fade-up">
+          <div class="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-blue-600/30 text-sky-300 text-xl sm:text-2xl flex items-center justify-center mx-auto border border-sky-500/30">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <h4 class="font-display font-bold text-base sm:text-lg text-white">Naqi</h4>
+          <span class="text-[11px] text-sky-400 font-bold uppercase tracking-wider block">Co-Developer</span>
+        </div>
+
+        <div class="bg-slate-800/80 p-5 sm:p-6 rounded-2xl border border-slate-700 text-center space-y-3 animate-on-scroll fade-right">
+          <div class="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-blue-600/30 text-sky-300 text-xl sm:text-2xl flex items-center justify-center mx-auto border border-sky-500/30">
+            <i class="fa-solid fa-palette"></i>
+          </div>
+          <h4 class="font-display font-bold text-base sm:text-lg text-white">Muqbil</h4>
+          <span class="text-[11px] text-sky-400 font-bold uppercase tracking-wider block">Co-Developer</span>
+        </div>
+      </div>
+
+      <div class="max-w-md mx-auto bg-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-700 text-center space-y-2 animate-on-scroll zoom-in">
+        <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Project Supervision & Guidance</span>
+        <h3 class="font-display text-xl sm:text-2xl font-black text-sky-300">Sir Moiz</h3>
+        <p class="text-xs text-slate-400">Computer Science Department | The Times School Network</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SYSTEM ARCHITECTURE SECTION -->
+  <section id="about" class="py-14 sm:py-20 px-4 sm:px-6 max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-center">
+      <div class="space-y-5 sm:space-y-6 animate-on-scroll fade-left">
+        <span class="text-xs font-bold uppercase tracking-widest text-brandBlueLight bg-blue-50 px-3 py-1 rounded-full">System Architecture</span>
+        <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-brandBlue">Designed for Interactive Learning & Student Engagement</h2>
+        <p class="text-slate-600 leading-relaxed text-xs sm:text-sm md:text-base">
+          This system was created specifically for the Computer Exhibition 2026. It allows students to select their grade and subject, take randomized multiple-choice tests, and view immediate performance scores.
+        </p>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3">
+            <i class="fa-solid fa-circle-check text-emerald-500 text-lg sm:text-xl mt-0.5 shrink-0"></i>
+            <p class="text-xs sm:text-sm text-slate-700 font-medium">Randomized Questions & Options so every student gets a unique attempt.</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="fa-solid fa-circle-check text-emerald-500 text-lg sm:text-xl mt-0.5 shrink-0"></i>
+            <p class="text-xs sm:text-sm text-slate-700 font-medium">Full Teacher & Sir appreciation voting module to celebrate educators.</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="fa-solid fa-circle-check text-emerald-500 text-lg sm:text-xl mt-0.5 shrink-0"></i>
+            <p class="text-xs sm:text-sm text-slate-700 font-medium">Secure User Authentication with real-time Firebase DB integration.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-blue-50 to-sky-100 p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-blue-200 shadow-xl space-y-6 animate-on-scroll fade-right">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-award text-2xl sm:text-3xl text-amber-500 shrink-0"></i>
+          <div>
+            <h3 class="font-display font-bold text-base sm:text-lg text-brandBlue">Project Credentials</h3>
+            <p class="text-xs text-slate-500">Computer Exhibition 2026</p>
+          </div>
+        </div>
+        <div class="space-y-3 sm:space-y-4 text-xs sm:text-sm">
+          <div class="p-3 sm:p-4 bg-white rounded-xl border border-slate-200">
+            <span class="font-bold text-slate-400 block text-[10px] uppercase">Institution</span>
+            <span class="font-bold text-brandBlue text-sm sm:text-base">The Times School Network</span>
+          </div>
+          <div class="p-3 sm:p-4 bg-white rounded-xl border border-slate-200">
+            <span class="font-bold text-slate-400 block text-[10px] uppercase">Supervising Teacher</span>
+            <span class="font-bold text-brandBlue text-sm sm:text-base">Sir Moiz</span>
+          </div>
+          <div class="p-3 sm:p-4 bg-white rounded-xl border border-slate-200">
+            <span class="font-bold text-slate-400 block text-[10px] uppercase">Development Team</span>
+            <span class="font-bold text-brandBlue text-sm sm:text-base">Hasnain, Arham, Naqi, & Muqbil</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ SECTION -->
+  <section id="faq" class="py-14 sm:py-20 px-4 sm:px-6 max-w-4xl mx-auto space-y-6 sm:space-y-8">
+    <div class="text-center space-y-3 animate-on-scroll fade-up">
+      <span class="text-xs font-bold uppercase tracking-widest text-brandBlueLight bg-blue-50 px-3 py-1 rounded-full">Help & Information</span>
+      <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-brandBlue">Frequently Asked Questions</h2>
+    </div>
+
+    <div class="space-y-4">
+      <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-2 animate-on-scroll fade-left">
+        <h4 class="font-display font-bold text-sm sm:text-base text-brandBlue flex items-center gap-2">
+          <i class="fa-solid fa-circle-question text-brandBlueLight shrink-0"></i>
+          <span>How many questions are asked in each quiz session?</span>
+        </h4>
+        <p class="text-xs text-slate-600 leading-relaxed pl-5 sm:pl-6">
+          Every student receives 10 randomized questions based on their selected class and subject.
+        </p>
+      </div>
+
+      <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-2 animate-on-scroll fade-right">
+        <h4 class="font-display font-bold text-sm sm:text-base text-brandBlue flex items-center gap-2">
+          <i class="fa-solid fa-circle-question text-brandBlueLight shrink-0"></i>
+          <span>What happens if the 90 seconds timer ends?</span>
+        </h4>
+        <p class="text-xs text-slate-600 leading-relaxed pl-5 sm:pl-6">
+          The quiz automatically submits whatever answers have been selected up to that second and forwards the student to the result & voting screen.
+        </p>
+      </div>
+
+      <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-2 animate-on-scroll fade-left">
+        <h4 class="font-display font-bold text-sm sm:text-base text-brandBlue flex items-center gap-2">
+          <i class="fa-solid fa-circle-question text-brandBlueLight shrink-0"></i>
+          <span>Why do I need to log in before accessing the main portal?</span>
+        </h4>
+        <p class="text-xs text-slate-600 leading-relaxed pl-5 sm:pl-6">
+          Logging in allows the system to save your scores, track your attempts, and authorize your vote for teachers securely.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER (injected by assets/js/core/layout.js) -->
+  <div id="site-footer"></div>
+
+  <script src="assets/js/config/constants.js"></script>
+  <script src="assets/js/core/utils.js"></script>
+  <script src="assets/js/firebase.js"></script>
+  <script src="assets/js/core/auth.js"></script>
+  <script src="assets/js/core/layout.js"></script>
+  <script src="assets/js/pages/home.js"></script>
+</body>
+</html>

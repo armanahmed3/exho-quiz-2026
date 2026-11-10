@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Add your tab logo here -->
+  <link rel="icon" type="image/png" href="../assets/img/logo.png">
+  <title>Exhibition Quiz &amp; Teacher Voting 2026 - The Times School Network</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../assets/js/config/tailwind.config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Outfit:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="../assets/css/app.css" />
+  <!-- Auth guard: must run before the page renders -->
+  <script src="../assets/js/config/constants.js"></script>
+  <script src="../assets/js/core/auth.js"></script>
+  <script>Auth.requireStudent();</script>
+</head>
+
+<body class="bg-white text-brandBlue font-sans min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-brandBlue selection:text-white relative" data-base="../" data-page="quiz">
+
+  <div class="bg-animation-container" aria-hidden="true">
+    <div class="floating-shape"></div><div class="floating-shape"></div><div class="floating-shape"></div><div class="floating-shape"></div><div class="floating-shape"></div>
+  </div>
+
+  <div id="site-navbar"></div>
+
+  <!-- FLOATING STICKY WORKING TIMER CARD (Appears on scroll down) -->
+  <div id="floatingTimerCard" class="fixed top-16 sm:top-20 md:top-24 left-1/2 -translate-x-1/2 z-50 hidden opacity-0 transition-all duration-300 transform -translate-y-4 max-w-[94vw] w-auto pointer-events-none">
+    <div class="glass-card bg-white/95 backdrop-blur-md shadow-2xl border-2 border-blue-300 rounded-full px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center gap-2 sm:gap-4 pointer-events-auto">
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <i class="fa-solid fa-clock text-brandBlue text-sm sm:text-base animate-pulse"></i>
+        <span class="text-[10px] sm:text-xs font-extrabold text-slate-600 uppercase tracking-wider hidden xs:inline sm:inline">Time:</span>
+      </div>
+      <div class="w-20 sm:w-32 md:w-36 bg-slate-200 rounded-full h-2.5 sm:h-3 overflow-hidden border border-slate-300 shrink-0">
+        <div id="floatingTimerProgress" class="bg-brandBlue h-full w-full transition-all duration-100"></div>
+      </div>
+      <span id="floatingTimerText" class="font-mono font-black text-brandBlue text-sm sm:text-base md:text-lg w-12 sm:w-16 text-right shrink-0">01:30</span>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-3 sm:px-4 pt-24 sm:pt-28 pb-10 sm:pb-12 flex-grow max-w-4xl flex items-center justify-center relative z-10">
+
+    <!-- 1. LANDING & REGISTRATION VIEW -->
+    <section id="view-landing" class="w-full space-y-5 sm:space-y-6">
+      <form id="registerForm" novalidate class="glass-card enter rounded-2xl p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6">
+        <div class="text-center space-y-2 pb-2 border-b border-blue-100">
+          <span class="text-[10px] sm:text-xs font-bold uppercase tracking-widest bg-blue-100 text-brandBlue px-3 py-1 rounded-full inline-block animate-pulse"><i class="fa-solid fa-sparkles mr-1"></i> Annual Computer Exhibition 2026</span>
+          <h1 class="font-display text-2xl sm:text-3xl md:text-5xl font-black gradient-heading pt-1 sm:pt-2">Exhibition Quiz &amp; Student Portal</h1>
+          <p class="text-slate-600 text-xs sm:text-sm max-w-md mx-auto">Select your class and subject to get class-specific randomized questions in 90 seconds!</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div data-field>
+            <label class="label" for="inputName"><i class="fa-solid fa-user text-brandBlueLight mr-1"></i> Student Name</label>
+            <input type="text" id="inputName" name="name" data-rule="studentName" minlength="2" maxlength="40" autocomplete="off" placeholder="e.g. Ali Ahmed" class="input" required>
+            <p class="hint">2-40 characters, letters and spaces only.</p>
+          </div>
+          <div data-field>
+            <label class="label" for="inputClass"><i class="fa-solid fa-graduation-cap text-brandBlueLight mr-1"></i> Select Class</label>
+            <select id="inputClass" name="class" data-rule="className" class="input" required>
+              <option value="" disabled selected>-- Choose Class --</option>
+              <option value="Class 7">Class 7</option>
+              <option value="Class 8">Class 8</option>
+              <option value="Class 9">Class 9</option>
+              <option value="Class 10">Class 10</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="space-y-2 sm:space-y-3 pt-2" data-field>
+          <label class="label"><i class="fa-solid fa-book-open text-brandBlueLight mr-1"></i> Choose Your Subject Expert</label>
+          <div id="subjectGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3"></div>
+          <input type="hidden" id="inputSubject" name="subject" data-rule="subjectId" value="">
+        </div>
+
+        <button type="submit" class="btn-primary w-full text-base sm:text-lg font-display tracking-wide py-3.5 sm:py-4">
+          <span>Continue to Instructions</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+    </section>
+
+    <!-- 2. INSTRUCTIONS VIEW -->
+    <section id="view-instructions" class="w-full hidden animate-fade-in">
+      <div class="glass-card rounded-2xl p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6 text-center">
+        <div class="inline-flex p-3 sm:p-4 rounded-full bg-blue-50 text-brandBlue border border-blue-200 text-2xl sm:text-3xl mb-1 sm:mb-2 animate-pulse">
+          <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+        <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-black gradient-heading">Quiz Instructions & Guidelines</h2>
+        
+        <div class="bg-blue-50/70 rounded-xl p-3 sm:p-4 border border-blue-100 text-left space-y-2 max-w-lg mx-auto text-xs sm:text-sm">
+          <div class="flex justify-between border-b border-blue-200/80 pb-2">
+            <span class="text-slate-500">Student Name:</span>
+            <span id="summaryName" class="font-bold text-brandBlue">--</span>
+          </div>
+          <div class="flex justify-between border-b border-blue-200/80 pb-2">
+            <span class="text-slate-500">Class:</span>
+            <span id="summaryClass" class="font-bold text-slate-800">--</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Chosen Subject:</span>
+            <span id="summarySubject" class="font-bold text-brandBlueLight">--</span>
+          </div>
+        </div>
+
+        <div class="space-y-2 sm:space-y-3 text-left text-xs sm:text-sm bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200">
+          <p class="font-bold text-brandBlue flex items-center gap-2"><i class="fa-solid fa-circle-info text-brandBlueLight"></i> Important Rules:</p>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li>You will get <strong class="text-brandBlue">Class-Specific Randomized MCQs (7 Subject + 3 IQ)</strong>.</li>
+            <li>Total Time Limit: <strong class="text-brandBlue">90 Seconds (1.5 Minutes)</strong>.</li>
+            <li>Marks & status (Green for ≥8, Red for <8) will record automatically.</li>
+            <li>In voting, cast <strong class="text-brandBlue">1 vote for Teachers</strong> and <strong class="text-brandBlue">1 vote for Sir</strong>.</li>
+          </ul>
+        </div>
+
+        <button onclick="startQuiz()" class="w-full py-3.5 sm:py-4 rounded-xl bg-brandBlue hover:bg-brandBlueHover text-white font-display font-bold text-base sm:text-lg tracking-wide active:scale-[0.99] transition shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-blue-900/30">
+          <i class="fa-solid fa-play"></i>
+          <span>START QUIZ NOW</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. QUIZ VIEW -->
+    <section id="view-quiz" class="w-full hidden space-y-4 animate-fade-in">
+      <div id="mainTimerCard" class="glass-card rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+        <div class="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
+          <span id="quizSubjectBadge" class="px-2.5 sm:px-3 py-1 rounded-lg bg-blue-100 text-brandBlue border border-blue-200 font-bold text-xs sm:text-sm truncate max-w-[180px] sm:max-w-none">Subject</span>
+          <span id="questionCounter" class="text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">Question 1 of 10</span>
+        </div>
+        <div class="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <i class="fa-solid fa-clock text-brandBlue text-lg sm:text-xl animate-pulse shrink-0"></i>
+          <div class="flex-grow sm:w-40 md:w-48 bg-slate-200 rounded-full h-2.5 sm:h-3 overflow-hidden border border-slate-300">
+            <div id="timerProgress" class="bg-brandBlue h-full w-full"></div>
+          </div>
+          <span id="timerText" class="font-mono font-bold text-brandBlue text-base sm:text-lg w-14 sm:w-16 text-right shrink-0">01:30</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6">
+        <div class="text-center pb-2 border-b border-blue-100">
+          <h2 class="font-display text-xl sm:text-2xl md:text-3xl font-black gradient-heading">Live Knowledge Challenge</h2>
+        </div>
+        
+        <h3 id="quizQuestionText" class="font-display text-lg sm:text-xl md:text-2xl font-bold text-brandBlue leading-snug break-words">Question text will appear here...</h3>
+        <div id="quizOptionsContainer" class="space-y-2.5 sm:space-y-3"></div>
+        <div class="flex items-center justify-between pt-4 border-t border-slate-200 gap-2">
+          <button id="btnPrev" onclick="prevQuestion()" class="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm md:text-base border border-slate-300 transition flex items-center gap-1.5 sm:gap-2">
+            <i class="fa-solid fa-chevron-left"></i> Previous
+          </button>
+          <button id="btnNext" onclick="nextQuestion()" class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-brandBlue hover:bg-brandBlueHover text-white font-bold text-xs sm:text-sm md:text-base transition flex items-center gap-1.5 sm:gap-2 shadow-md shadow-blue-900/10">
+            Next <i class="fa-solid fa-chevron-right"></i>
+          </button>
+          <button id="btnSubmit" onclick="submitQuiz()" class="hidden px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm md:text-base transition shadow-lg shadow-emerald-600/20 flex items-center gap-1.5 sm:gap-2">
+            <i class="fa-solid fa-paper-plane"></i> Submit Quiz
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. QUIZ RESULT VIEW -->
+    <section id="view-result" class="w-full hidden animate-fade-in">
+      <div class="glass-card rounded-2xl p-5 sm:p-6 md:p-8 text-center space-y-5 sm:space-y-6">
+        <div class="inline-flex p-4 sm:p-5 rounded-full bg-blue-50 border border-blue-200 text-3xl sm:text-4xl mb-1 sm:mb-2 text-brandBlue animate-bounce">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-black gradient-heading">Performance Summary & Result</h2>
+
+        <div class="bg-blue-50/80 p-5 sm:p-6 rounded-2xl border border-blue-200 max-w-sm mx-auto space-y-2">
+          <p class="text-[10px] sm:text-xs uppercase tracking-widest text-slate-500 font-bold">Your Final Score</p>
+          <div class="text-4xl sm:text-5xl font-display font-black text-brandBlue">
+            <span id="resScore">0</span> <span class="text-xl sm:text-2xl text-slate-400 font-normal">/ 10</span>
+          </div>
+          <p id="resFeedback" class="text-xs font-bold pt-1"></p>
+        </div>
+
+        <button onclick="goToTeacherVoting()" class="w-full py-3.5 sm:py-4 rounded-xl bg-brandBlue hover:bg-brandBlueHover font-display font-bold text-white text-base sm:text-lg tracking-wide transition shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2">
+          <span>Proceed to Voting Section</span>
+          <i class="fa-solid fa-check-to-slot"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- 5. TEACHER VOTING VIEW -->
+    <section id="view-voting" class="w-full hidden space-y-6 sm:space-y-8 animate-fade-in">
+      <div class="glass-card rounded-2xl p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
+        <div class="text-center space-y-2">
+          <span class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-brandBlueLight">Exhibition Appreciation</span>
+          <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-black gradient-heading">Teacher & Staff Appreciation Voting</h2>
+          <p class="text-slate-600 text-xs sm:text-sm max-w-lg mx-auto">Please select 1 option from each category below to complete your submission.</p>
+        </div>
+
+        <div class="space-y-3 sm:space-y-4 pt-2">
+          <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
+            <i class="fa-solid fa-chalkboard-user text-brandBlue text-base sm:text-lg"></i>
+            <h3 class="font-display font-bold text-base sm:text-lg text-brandBlue">1. Teachers Section</h3>
+          </div>
+          <div id="teachersGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"></div>
+        </div>
+
+        <div class="space-y-3 sm:space-y-4 pt-2">
+          <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
+            <i class="fa-solid fa-user-tie text-brandBlue text-base sm:text-lg"></i>
+            <h3 class="font-display font-bold text-base sm:text-lg text-brandBlue">2. Sir Section</h3>
+          </div>
+          <div id="sirsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3"></div>
+        </div>
+
+        <div id="saveError" class="hidden banner banner-error" role="alert"></div>
+
+        <div id="votingError" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs sm:text-sm text-center font-medium animate-bounce">
+          <i class="fa-solid fa-circle-exclamation mr-1"></i> Please make sure you cast one vote in both sections!
+        </div>
+
+        <button id="btnCastVote" onclick="submitTeacherVote()" class="w-full py-3.5 sm:py-4 rounded-xl bg-brandBlue hover:bg-brandBlueHover text-white font-display font-bold text-base sm:text-lg tracking-wide transition shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-thumbs-up"></i>
+          <span>Submit Both Votes & Finish</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 6. FINISH VIEW -->
+    <section id="view-finish" class="w-full hidden animate-fade-in">
+      <div class="glass-card rounded-2xl p-5 sm:p-8 text-center space-y-5 sm:space-y-6">
+        <div class="inline-flex p-4 sm:p-6 rounded-full bg-blue-50 text-brandBlue border border-blue-200 text-4xl sm:text-5xl animate-bounce">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-black gradient-heading">All Done! Thank You!</h2>
+        <p class="text-slate-600 text-sm sm:text-base max-w-md mx-auto leading-relaxed">Your quiz response and voting preferences have been successfully recorded.</p>
+        <div id="syncNote" class="hidden" role="status"></div>
+
+        <div class="pt-4 space-y-4">
+          <button id="nextStudentButton" onclick="resetApp()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-brandBlue hover:bg-brandBlueHover text-white font-bold transition shadow-md hover:scale-105 active:scale-95">
+            <i class="fa-solid fa-rotate-right mr-2"></i> Next Student
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <!-- Fully Working Synchronized Timer & Scroll Script -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const floatingTimerCard = document.getElementById('floatingTimerCard');
+      const mainText = document.getElementById('timerText');
+      const mainProg = document.getElementById('timerProgress');
+      const floatText = document.getElementById('floatingTimerText');
+      const floatProg = document.getElementById('floatingTimerProgress');
+
+      // 1. Real-time Synchronization between Main Timer and Floating Timer
+      setInterval(() => {
+        const viewQuiz = document.getElementById('view-quiz');
+        if (viewQuiz && !viewQuiz.classList.contains('hidden')) {
+          if (mainText && floatText) {
+            floatText.textContent = mainText.textContent;
+          }
+          if (mainProg && floatProg) {
+            floatProg.style.width = mainProg.style.width;
+          }
+        }
+      }, 50);
+
+      // 2. Scroll Handler to Show/Hide Floating Timer
+      window.addEventListener('scroll', () => {
+        const viewQuiz = document.getElementById('view-quiz');
+        if (viewQuiz && !viewQuiz.classList.contains('hidden')) {
+          if (window.scrollY > 60) {
+            floatingTimerCard.classList.remove('hidden');
+            setTimeout(() => {
+              floatingTimerCard.classList.remove('opacity-0', '-translate-y-4');
+            }, 10);
+          } else {
+            floatingTimerCard.classList.add('opacity-0', '-translate-y-4');
+            setTimeout(() => {
+              if (floatingTimerCard.classList.contains('opacity-0')) {
+                floatingTimerCard.classList.add('hidden');
+              }
+            }, 300);
+          }
+        } else {
+          if (floatingTimerCard) {
+            floatingTimerCard.classList.add('hidden', 'opacity-0', '-translate-y-4');
+          }
+        }
+      });
+    });
+  </script>
+
+  <script src="../assets/js/core/utils.js"></script>
+  <script src="../assets/js/core/validators.js"></script>
+  <script src="../assets/js/core/form-kit.js"></script>
+  <script src="../assets/js/core/layout.js"></script>
+  <script src="../assets/js/data/questions.js"></script>
+  <script src="../assets/js/firebase.js"></script>
+  <script src="../assets/js/pages/quiz.js"></script>
+</body>
+</html>

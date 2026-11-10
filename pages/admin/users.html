@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <!-- Add your tab logo here -->
+  <link rel="icon" type="image/png" href="../assets/img/logo.png?v=1">
+  <title>Registered Users - Admin Panel | The Times School Network</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../../assets/js/config/tailwind.config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <link rel="stylesheet" href="../../assets/css/app.css" />
+  <!-- Admin guard: must run before the page renders -->
+  <script src="../../assets/js/config/constants.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script>Auth.requireAdmin();</script>
+</head>
+<body class="admin-body font-sans text-slate-800" data-base="../../" data-admin-page="users">
+
+  <div id="page-content" data-title="Registered Users" data-subtitle="Student accounts - view, add and remove">
+
+    <div class="banner banner-info text-left"><i class="fa-solid fa-circle-info mr-1"></i> Accounts are stored in this browser (localStorage). This list shows accounts created on <strong>this device</strong>.</div>
+
+    <section class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+      <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-4 xl:col-span-2">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+          <h2 class="font-display text-base sm:text-lg font-bold text-brandBlue flex items-center gap-2"><i class="fa-solid fa-user-check"></i> Registered Accounts</h2>
+          <span class="text-xs font-bold px-3 py-1 bg-blue-100 text-brandBlue rounded-full" id="userCountBadge">0 Users</span>
+        </div>
+        <div class="table-wrap"><table class="data-table">
+          <thead><tr><th>#</th><th>Full Name</th><th>Username</th><th>Email</th><th>Registered</th><th>Action</th></tr></thead>
+          <tbody id="registeredUsersTableBody"></tbody>
+        </table></div>
+      </div>
+
+      <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-4 self-start">
+        <h2 class="font-display text-base sm:text-lg font-bold text-brandBlue flex items-center gap-2 border-b border-slate-200 pb-2"><i class="fa-solid fa-user-plus"></i> Add Account</h2>
+        <div id="formBanner" class="hidden" role="status" aria-live="polite"></div>
+        <form id="addUserForm" novalidate class="space-y-3" autocomplete="off">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div data-field><label class="label" for="firstName">First name *</label><input class="input" id="firstName" name="firstName" data-rule="personName" minlength="2" maxlength="30" required></div>
+            <div data-field><label class="label" for="lastName">Last name *</label><input class="input" id="lastName" name="lastName" data-rule="personName" minlength="2" maxlength="30" required></div>
+          </div>
+          <div data-field><label class="label" for="username">Username *</label><input class="input" id="username" name="username" data-rule="username" minlength="6" maxlength="20" autocapitalize="none" spellcheck="false" required><p class="hint">6-20 letters/numbers only.</p></div>
+          <div data-field><label class="label" for="email">Email *</label><input class="input" type="email" id="email" name="email" data-rule="email" maxlength="60" autocapitalize="none" required><p class="hint">Must end with @gmail.com</p></div>
+          <div data-field><label class="label" for="password">Password *</label><input class="input" type="password" id="password" name="password" data-rule="password" minlength="8" maxlength="64" autocomplete="new-password" required><p class="hint">8-64 chars, a letter and a number, no spaces.</p></div>
+          <div data-field><label class="label" for="confirmPassword">Confirm password *</label><input class="input" type="password" id="confirmPassword" name="confirm" data-rule="confirm" maxlength="64" autocomplete="new-password" required></div>
+          <button type="submit" class="btn-primary w-full"><i class="fa-solid fa-user-plus"></i> Create Account</button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/validators.js"></script>
+  <script src="../../assets/js/core/form-kit.js"></script>
+  <script src="../../assets/js/firebase.js"></script>
+  <script src="../../assets/js/admin/admin-layout.js"></script>
+  <script src="../../assets/js/admin/admin-data.js"></script>
+  <script src="../../assets/js/admin/users.js"></script>
+</body>
+</html>

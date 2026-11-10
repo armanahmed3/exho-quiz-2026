@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <!-- Add your tab logo here -->
+  <link rel="icon" type="image/png" href="../assets/img/logo.png?v=1">
+  <title>Analytics & Charts | The Times School Network</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../../assets/js/config/tailwind.config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <link rel="stylesheet" href="../../assets/css/app.css" />
+  <!-- Admin guard: must run before the page renders -->
+  <script src="../../assets/js/config/constants.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script>Auth.requireAdmin();</script>
+</head>
+<body class="admin-body font-sans text-slate-800" data-base="../../" data-admin-page="analytics">
+
+  <div id="page-content" data-title="Analytics & Charts" data-subtitle="Detailed charts built from every quiz submission">
+    <div id="dataError" class="hidden" role="alert"></div>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div class="glass-card p-4 sm:p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between"><h3 class="font-display text-xs font-bold text-brandBlue">Top 5 Teachers (by votes)</h3><i class="fa-solid fa-chalkboard-user text-brandBlueLight"></i></div>
+          <div class="h-60 sm:h-72 relative flex items-center justify-center"><canvas id="top5TeachersChart"></canvas></div>
+        </div>
+        <div class="glass-card p-4 sm:p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between"><h3 class="font-display text-xs font-bold text-brandBlue">Top 5 Sirs (by votes)</h3><i class="fa-solid fa-user-tie text-brandBlueLight"></i></div>
+          <div class="h-60 sm:h-72 relative flex items-center justify-center"><canvas id="top5SirsChart"></canvas></div>
+        </div>
+        <div class="glass-card p-4 sm:p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between"><h3 class="font-display text-xs font-bold text-brandBlue">Top Students (score 8 and above)</h3><i class="fa-solid fa-award text-amber-500"></i></div>
+          <div class="h-60 sm:h-72 relative flex items-center justify-center"><canvas id="topStudentsCircleChart"></canvas>
+          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">
+            <span id="centerTopStudents" class="text-2xl font-display font-black text-brandBlue">0</span>
+            <span class="text-[9px] uppercase font-bold text-slate-400">Top Students</span>
+          </div></div>
+        </div>
+        <div class="glass-card p-4 sm:p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between"><h3 class="font-display text-xs font-bold text-brandBlue">Attempts by Class</h3><i class="fa-solid fa-graduation-cap text-emerald-500"></i></div>
+          <div class="h-60 sm:h-72 relative flex items-center justify-center"><canvas id="classChart"></canvas>
+          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">
+            <span id="centerTotalAttempts" class="text-2xl font-display font-black text-brandBlue">0</span>
+            <span class="text-[9px] uppercase font-bold text-slate-400">Attempts</span>
+          </div></div>
+        </div>
+        <div class="glass-card p-4 sm:p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between"><h3 class="font-display text-xs font-bold text-brandBlue">Score Distribution (0 - 10)</h3><i class="fa-solid fa-chart-simple text-brandBlueLight"></i></div>
+          <div class="h-60 sm:h-72 relative flex items-center justify-center"><canvas id="distChart"></canvas></div>
+        </div>
+        <div class="glass-card p-4 sm:p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between"><h3 class="font-display text-xs font-bold text-brandBlue">Average Score by Subject</h3><i class="fa-solid fa-book-open text-brandBlueLight"></i></div>
+          <div class="h-60 sm:h-72 relative flex items-center justify-center"><canvas id="subjectChart"></canvas></div>
+        </div>
+    </section>
+  </div>
+
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/validators.js"></script>
+  <script src="../../assets/js/core/form-kit.js"></script>
+  <script src="../../assets/js/firebase.js"></script>
+  <script src="../../assets/js/admin/admin-layout.js"></script>
+  <script src="../../assets/js/admin/admin-data.js"></script>
+  <script src="../../assets/js/admin/charts.js"></script>
+  <script src="../../assets/js/admin/analytics.js"></script>
+</body>
+</html>

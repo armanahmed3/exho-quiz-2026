@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <!-- Add your tab logo here -->
+  <link rel="icon" type="image/png" href="../assets/img/logo.png?v=1">
+  <title>Data & Settings | The Times School Network</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../../assets/js/config/tailwind.config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <link rel="stylesheet" href="../../assets/css/app.css" />
+  <!-- Admin guard: must run before the page renders -->
+  <script src="../../assets/js/config/constants.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script>Auth.requireAdmin();</script>
+</head>
+<body class="admin-body font-sans text-slate-800" data-base="../../" data-admin-page="settings">
+
+  <div id="page-content" data-title="Data & Settings" data-subtitle="Firebase status and data management">
+
+    <div id="formBanner" class="hidden" role="status" aria-live="polite"></div>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-4">
+        <h2 class="font-display text-base sm:text-lg font-bold text-brandBlue flex items-center gap-2 border-b border-slate-200 pb-2"><i class="fa-solid fa-database"></i> Firebase Connection</h2>
+        <dl class="text-xs sm:text-sm space-y-2">
+          <div class="flex justify-between items-center gap-2"><dt class="text-slate-500 shrink-0">Project</dt><dd id="fbProject" class="font-mono font-bold text-brandBlue truncate">-</dd></div>
+          <div class="flex justify-between items-center gap-2"><dt class="text-slate-500 shrink-0">Collection</dt><dd id="fbCollection" class="font-mono font-bold text-brandBlue truncate">-</dd></div>
+          <div class="flex justify-between items-center gap-2"><dt class="text-slate-500 shrink-0">Status</dt><dd id="fbStatus" class="font-bold text-slate-500 truncate">Not tested</dd></div>
+          <div class="flex justify-between items-center gap-2"><dt class="text-slate-500 shrink-0">Records stored</dt><dd id="fbCount" class="font-bold text-brandBlue truncate">-</dd></div>
+          <div class="flex justify-between items-center gap-2"><dt class="text-slate-500 shrink-0">Waiting to upload</dt><dd id="fbPending" class="font-bold text-brandBlue truncate">0</dd></div>
+        </dl>
+        <div class="flex flex-wrap gap-2 pt-2">
+          <button type="button" id="btnTest" class="btn-primary text-xs sm:text-sm"><i class="fa-solid fa-plug-circle-check"></i> Test connection</button>
+          <button type="button" id="btnSync" class="btn-ghost text-xs sm:text-sm"><i class="fa-solid fa-cloud-arrow-up"></i> Sync pending records</button>
+        </div>
+      </div>
+
+      <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-4 border-rose-200">
+        <h2 class="font-display text-base sm:text-lg font-bold text-rose-600 flex items-center gap-2 border-b border-rose-200 pb-2"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone - Reset Quiz Data</h2>
+        <p class="text-xs sm:text-sm text-slate-600">Permanently deletes <strong>every</strong> student quiz record and vote from Firebase. This cannot be undone.</p>
+        <form id="resetForm" novalidate class="space-y-3" autocomplete="off">
+          <div data-field><label class="label" for="phrase">Type <span class="font-mono text-rose-600">RESET</span> to confirm</label>
+            <input class="input" id="phrase" name="phrase" data-rule="resetPhrase" maxlength="5" autocomplete="off" spellcheck="false" placeholder="RESET"></div>
+          <button type="submit" id="btnReset" class="btn-danger w-full sm:w-auto"><i class="fa-solid fa-trash-can"></i> Reset Quiz Data</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="glass-card p-4 sm:p-6 rounded-2xl space-y-3">
+      <h2 class="font-display text-base sm:text-lg font-bold text-brandBlue flex items-center gap-2 border-b border-slate-200 pb-2"><i class="fa-solid fa-user-shield"></i> Admin Session</h2>
+      <p class="text-xs sm:text-sm text-slate-600">You are logged in as <strong>admin</strong>. The session ends when you close this tab. Admin credentials are set in <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">assets/js/config/constants.js</code>.</p>
+    </section>
+  </div>
+
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/validators.js"></script>
+  <script src="../../assets/js/core/form-kit.js"></script>
+  <script src="../../assets/js/firebase.js"></script>
+  <script src="../../assets/js/admin/admin-layout.js"></script>
+  <script src="../../assets/js/admin/admin-data.js"></script>
+  <script src="../../assets/js/admin/settings.js"></script>
+</body>
+</html>

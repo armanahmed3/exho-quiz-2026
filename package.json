@@ -1,0 +1,12 @@
+{
+  "name": "exho-quiz-2026",
+  "version": "1.0.0",
+  "description": "Exhibition Quiz & Student Voting System - The Times School Network",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": ["quiz", "exhibition", "voting", "school", "firebase"],
+  "author": "The Times School Network",
+  "license": "ISC"
+}
