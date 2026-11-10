@@ -45,24 +45,15 @@ const Auth = {
    * Returns '' on success or an error string.
    */
   async addUser({ firstName, lastName, username, email, password }) {
-    // Attempt remote sync first to ensure unique username/email across all devices
-    if (window.FirebaseService) {
-      try {
-        const remote = await FirebaseService.fetchUsers();
-        if (remote && Array.isArray(remote)) {
-          const map = new Map();
-          this.getUsers().forEach((u) => map.set(u.username.toLowerCase(), u));
-          remote.forEach((u) => map.set(u.username.toLowerCase(), u));
-          this.saveUsers(Array.from(map.values()));
-        }
-      } catch (e) {}
-    }
+    const cleanUsername = username.trim();
+    const cleanEmail = email.trim().toLowerCase();
 
-    const users = this.getUsers();
-    if (users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
+    // 1. Fast local check first
+    const localUsers = this.getUsers();
+    if (localUsers.some((u) => u.username.toLowerCase() === cleanUsername.toLowerCase())) {
       return 'Username already taken. Please choose another.';
     }
-    if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
+    if (localUsers.some((u) => u.email.toLowerCase() === cleanEmail)) {
       return 'An account with this email already exists.';
     }
 
@@ -70,20 +61,29 @@ const Auth = {
       id: Date.now(),
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      username: username.trim(),
-      email: email.trim().toLowerCase(),
+      username: cleanUsername,
+      email: cleanEmail,
       password,
       registeredAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }),
     };
 
-    // Save to Firebase Firestore
+    // 2. Always save locally immediately so registration is guaranteed
+    localUsers.push(newUser);
+    this.saveUsers(localUsers);
+
+    // 3. Save to Firebase Firestore (non-blocking / fast timeout)
     if (window.FirebaseService) {
-      const fbResult = await FirebaseService.saveUser(newUser);
-      if (fbResult && fbResult.id) newUser.firestoreId = fbResult.id;
+      try {
+        const fbResult = await FirebaseService.saveUser(newUser);
+        if (fbResult && fbResult.id) {
+          newUser.firestoreId = fbResult.id;
+          this.saveUsers(this.getUsers().map(u => u.id === newUser.id ? newUser : u));
+        }
+      } catch (e) {
+        console.warn('Firebase saveUser caught:', e);
+      }
     }
 
-    users.push(newUser);
-    this.saveUsers(users);
     return '';
   },
 
@@ -99,23 +99,23 @@ const Auth = {
   },
 
   /**
-   * Authenticates user against Firebase Firestore and local storage.
+   * Authenticates user against local storage and Firebase Firestore.
    * -> { role: 'admin' } | { role: 'student', user } | null
    */
   async login(identifier, password) {
     const id = identifier.trim().toLowerCase();
 
-    // 1. Check Admin
+    // 1. Check Admin (instant)
     if (id === APP.ADMIN_USERNAME.toLowerCase() && password === APP.ADMIN_PASSWORD) {
       sessionStorage.setItem(APP.KEYS.ADMIN, '1');
       return { role: 'admin' };
     }
 
-    // 2. Check Local Cache first
+    // 2. Check Local Cache (instant)
     let users = this.getUsers();
     let user = users.find((u) => (u.username.toLowerCase() === id || u.email.toLowerCase() === id) && u.password === password);
 
-    // 3. If not found locally, query Firebase Firestore
+    // 3. If not found locally, try Firebase Firestore lookup
     if (!user && window.FirebaseService) {
       try {
         const remote = await FirebaseService.fetchUsers();

@@ -32,15 +32,27 @@
     measurementId: 'G-66GYHXMSE6',
   };
 
+  function timeout(ms = 2500) {
+    return new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), ms));
+  }
+
   const ready = (async () => {
-    const [appMod, analyticsMod, fs] = await Promise.all([
-      import(SDK + 'firebase-app.js'),
-      import(SDK + 'firebase-analytics.js'),
-      import(SDK + 'firebase-firestore.js'),
-    ]);
-    const app = appMod.initializeApp(firebaseConfig);
-    try { analyticsMod.getAnalytics(app); } catch (e) { console.warn('Analytics unavailable:', e.message); }
-    return { db: fs.getFirestore(app), fs };
+    try {
+      const [appMod, analyticsMod, fs] = await Promise.race([
+        Promise.all([
+          import(SDK + 'firebase-app.js'),
+          import(SDK + 'firebase-analytics.js'),
+          import(SDK + 'firebase-firestore.js'),
+        ]),
+        timeout(4000)
+      ]);
+      const app = appMod.initializeApp(firebaseConfig);
+      try { analyticsMod.getAnalytics(app); } catch (e) { console.warn('Analytics unavailable:', e.message); }
+      return { db: fs.getFirestore(app), fs };
+    } catch (e) {
+      console.warn('Firebase init warning:', e.message);
+      throw e;
+    }
   })();
 
   const readPending = () => {
@@ -49,8 +61,11 @@
   const writePending = (list) => localStorage.setItem(APP.KEYS.PENDING, JSON.stringify(list));
 
   async function addRecord(record) {
-    const { db, fs } = await ready;
-    return fs.addDoc(fs.collection(db, COLLECTION), record);
+    const { db, fs } = await Promise.race([ready, timeout(2500)]);
+    return Promise.race([
+      fs.addDoc(fs.collection(db, COLLECTION), record),
+      timeout(2500)
+    ]);
   }
 
   async function saveQuizRecord(record) {
@@ -76,16 +91,22 @@
   }
 
   async function fetchQuizRecords() {
-    const { db, fs } = await ready;
-    const snap = await fs.getDocs(fs.collection(db, COLLECTION));
+    const { db, fs } = await Promise.race([ready, timeout(3000)]);
+    const snap = await Promise.race([
+      fs.getDocs(fs.collection(db, COLLECTION)),
+      timeout(3000)
+    ]);
     const records = [];
     snap.forEach((d) => records.push({ id: d.id, ...d.data() }));
     return records;
   }
 
   async function clearQuizRecords() {
-    const { db, fs } = await ready;
-    const snap = await fs.getDocs(fs.collection(db, COLLECTION));
+    const { db, fs } = await Promise.race([ready, timeout(3000)]);
+    const snap = await Promise.race([
+      fs.getDocs(fs.collection(db, COLLECTION)),
+      timeout(3000)
+    ]);
     for (const d of snap.docs) await fs.deleteDoc(fs.doc(db, COLLECTION, d.id));
     return snap.size;
   }
@@ -93,8 +114,11 @@
   /* ---------- User Accounts (Firebase Firestore) ---------- */
   async function saveUser(user) {
     try {
-      const { db, fs } = await ready;
-      const ref = await fs.addDoc(fs.collection(db, USERS_COLLECTION), user);
+      const { db, fs } = await Promise.race([ready, timeout(2500)]);
+      const ref = await Promise.race([
+        fs.addDoc(fs.collection(db, USERS_COLLECTION), user),
+        timeout(2500)
+      ]);
       return { saved: true, id: ref.id };
     } catch (e) {
       console.warn('Firebase saveUser fallback to local:', e.message);
@@ -104,8 +128,11 @@
 
   async function fetchUsers() {
     try {
-      const { db, fs } = await ready;
-      const snap = await fs.getDocs(fs.collection(db, USERS_COLLECTION));
+      const { db, fs } = await Promise.race([ready, timeout(2500)]);
+      const snap = await Promise.race([
+        fs.getDocs(fs.collection(db, USERS_COLLECTION)),
+        timeout(2500)
+      ]);
       const users = [];
       snap.forEach((d) => users.push({ firestoreId: d.id, ...d.data() }));
       return users;
@@ -117,8 +144,11 @@
 
   async function deleteUser(id) {
     try {
-      const { db, fs } = await ready;
-      const snap = await fs.getDocs(fs.collection(db, USERS_COLLECTION));
+      const { db, fs } = await Promise.race([ready, timeout(2500)]);
+      const snap = await Promise.race([
+        fs.getDocs(fs.collection(db, USERS_COLLECTION)),
+        timeout(2500)
+      ]);
       for (const d of snap.docs) {
         const data = d.data();
         if (d.id === String(id) || String(data.id) === String(id)) {

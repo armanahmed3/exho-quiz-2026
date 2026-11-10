@@ -26,7 +26,7 @@
 
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i><span>Verifying credentials...</span>';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i><span>Logging In...</span>';
       }
       FormKit.hide(banner);
 
