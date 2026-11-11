@@ -5,13 +5,15 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "seed": "node seed_sqlite.js"
+    "seed": "node seed_sqlite.js",
+    "build": "echo Static site ready for Vercel"
   },
   "keywords": [
     "quiz",
     "exhibition",
     "voting",
     "school",
+    "firebase",
     "sqlite"
   ],
   "author": "The Times School Network",

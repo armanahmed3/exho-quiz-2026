@@ -38,6 +38,14 @@
   let useSQLite = null;
   async function checkSQLiteServer() {
     if (useSQLite !== null) return useSQLite;
+    
+    // On production hosting like Vercel (*.vercel.app), use Cloud database for universal cross-device sync
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocalhost) {
+      useSQLite = false;
+      return false;
+    }
+
     try {
       const res = await fetch(`${getApiBase()}/api/health`, { method: 'GET', cache: 'no-store' });
       if (res.ok) {
