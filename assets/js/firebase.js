@@ -1,23 +1,14 @@
 /**
- * Firebase / Firestore service - the ONLY file that talks to Firebase.
+ * Unified Database Service (SQLite Backend + Cloud Firestore Engine).
  *
- * Connected dynamically to Firebase Firestore ("quiz_records" and "users" collections).
- * All data is read and written directly to the cloud database with zero local storage dependence.
- * Supports real-time dynamic snapshot listeners for live multi-device syncing.
+ * Automatically detects the backend:
+ * 1. Primary: High-performance SQLite database backend via Express server (/api/...).
+ *    - Permanent disk storage in "database.sqlite"
+ *    - 100% offline-ready, zero internet required for exhibitions
+ *    - Real-time periodic dynamic sync across all devices on the network
+ * 2. Fallback: Firebase Firestore Cloud SDK if running purely static.
  *
- * Exposes: window.FirebaseService
- *   .ready                      Promise resolving with { db, fs, app }
- *   .saveQuizRecord(record)     -> saves doc to Firestore collection "quiz_records"
- *   .fetchQuizRecords()         -> [{ id, ...data }] directly from Firestore
- *   .subscribeQuizRecords(fn)   -> real-time onSnapshot listener
- *   .clearQuizRecords()         -> deletes all docs in "quiz_records" from Firestore
- *   .saveUser(userData)         -> saves doc to Firestore collection "users"
- *   .fetchUsers()               -> [{ firestoreId, ...data }] directly from Firestore
- *   .subscribeUsers(fn)         -> real-time onSnapshot listener
- *   .deleteUser(id)             -> deletes doc in "users" from Firestore
- *   .findUser(identifier, pass) -> authenticates against Firestore users
- *   .checkUserExists(user, eml) -> checks uniqueness directly in Firestore
- *   .flushPending()             -> one-time migration of any legacy local pending records to Firestore
+ * Exposes: window.FirebaseService / window.DataService
  */
 (function () {
   const SDK = 'https://www.gstatic.com/firebasejs/11.0.1/';
@@ -34,35 +25,87 @@
     measurementId: 'G-66GYHXMSE6',
   };
 
-  const ready = (async () => {
+  // Determine API base URL
+  function getApiBase() {
+    const origin = window.location.origin;
+    if (origin && origin.startsWith('http')) {
+      return origin;
+    }
+    return 'http://localhost:3000';
+  }
+
+  // Detect whether SQLite Express server is available
+  let useSQLite = null;
+  async function checkSQLiteServer() {
+    if (useSQLite !== null) return useSQLite;
+    try {
+      const res = await fetch(`${getApiBase()}/api/health`, { method: 'GET', cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.database === 'sqlite') {
+          useSQLite = true;
+          return true;
+        }
+      }
+    } catch (e) {
+      // Server not reachable
+    }
+    useSQLite = false;
+    return false;
+  }
+
+  // Firestore fallback initialization
+  const firestoreReady = (async () => {
     try {
       const [appMod, fs] = await Promise.all([
         import(SDK + 'firebase-app.js'),
         import(SDK + 'firebase-firestore.js'),
       ]);
       const app = appMod.initializeApp(firebaseConfig);
-      try {
-        const analyticsMod = await import(SDK + 'firebase-analytics.js');
-        analyticsMod.getAnalytics(app);
-      } catch (e) {
-        // Analytics is optional in local or offline contexts
-      }
       const db = fs.initializeFirestore
         ? fs.initializeFirestore(app, { experimentalAutoDetectLongPolling: true })
         : fs.getFirestore(app);
       return { db, fs, app };
     } catch (e) {
-      console.error('Firebase initialization error:', e);
-      throw e;
+      console.warn('Firestore fallback init error:', e.message);
+      return null;
     }
   })();
 
-  /* ---------- Quiz Records (Firestore collection "quiz_records") ---------- */
+  const ready = (async () => {
+    const hasSQLite = await checkSQLiteServer();
+    if (hasSQLite) {
+      console.log('✓ Connected to SQLite database server (database.sqlite)');
+      return { mode: 'sqlite' };
+    }
+    console.log('✓ Running with Firebase Firestore database');
+    return { mode: 'firestore', ...(await firestoreReady) };
+  })();
+
+  /* ---------- Quiz Records API ---------- */
 
   async function saveQuizRecord(record) {
+    if (await checkSQLiteServer()) {
+      try {
+        const res = await fetch(`${getApiBase()}/api/quiz-records`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(record),
+        });
+        const data = await res.json();
+        if (res.ok) return { saved: true, id: data.id };
+        throw new Error(data.error || 'Server error');
+      } catch (e) {
+        console.error('SQLite saveQuizRecord error:', e);
+        return { saved: false, error: e };
+      }
+    }
+
+    // Firestore fallback
     try {
-      const { db, fs } = await ready;
-      const docRef = await fs.addDoc(fs.collection(db, COLLECTION), record);
+      const fb = await firestoreReady;
+      if (!fb) throw new Error('Database service unavailable');
+      const docRef = await fb.fs.addDoc(fb.fs.collection(fb.db, COLLECTION), record);
       return { saved: true, id: docRef.id };
     } catch (e) {
       console.error('Firebase saveQuizRecord error:', e);
@@ -71,114 +114,193 @@
   }
 
   async function fetchQuizRecords() {
-    const { db, fs } = await ready;
-    const snap = await fs.getDocs(fs.collection(db, COLLECTION));
+    if (await checkSQLiteServer()) {
+      const res = await fetch(`${getApiBase()}/api/quiz-records`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Could not fetch quiz records from SQLite server');
+      return await res.json();
+    }
+
+    // Firestore fallback
+    const fb = await firestoreReady;
+    if (!fb) return [];
+    const snap = await fb.fs.getDocs(fb.fs.collection(fb.db, COLLECTION));
     const records = [];
-    snap.forEach((d) => {
-      records.push({ firestoreDocId: d.id, ...d.data() });
-    });
+    snap.forEach((d) => records.push({ firestoreDocId: d.id, ...d.data() }));
     return records;
   }
 
   function subscribeQuizRecords(callback, onError) {
-    let unsubscribe = () => {};
-    ready.then(({ db, fs }) => {
-      unsubscribe = fs.onSnapshot(
-        fs.collection(db, COLLECTION),
-        (snap) => {
-          const records = [];
-          snap.forEach((d) => records.push({ firestoreDocId: d.id, ...d.data() }));
-          callback(records);
-        },
-        (err) => {
-          console.error('Quiz records snapshot error:', err);
-          if (onError) onError(err);
-        }
-      );
-    }).catch((err) => {
-      console.error('Quiz records subscription failed:', err);
-      if (onError) onError(err);
+    let active = true;
+    checkSQLiteServer().then((isSQLite) => {
+      if (isSQLite) {
+        // Polling loop for SQLite to enable real-time live sync across devices
+        const poll = async () => {
+          if (!active) return;
+          try {
+            const records = await fetchQuizRecords();
+            callback(records);
+          } catch (e) {
+            if (onError) onError(e);
+          }
+          if (active) setTimeout(poll, 3000);
+        };
+        poll();
+      } else {
+        // Firestore onSnapshot listener
+        firestoreReady.then((fb) => {
+          if (!fb) return;
+          fb.fs.onSnapshot(
+            fb.fs.collection(fb.db, COLLECTION),
+            (snap) => {
+              const records = [];
+              snap.forEach((d) => records.push({ firestoreDocId: d.id, ...d.data() }));
+              callback(records);
+            },
+            onError
+          );
+        });
+      }
     });
-    return () => unsubscribe();
+    return () => { active = false; };
   }
 
   async function clearQuizRecords() {
-    const { db, fs } = await ready;
-    const snap = await fs.getDocs(fs.collection(db, COLLECTION));
+    if (await checkSQLiteServer()) {
+      const res = await fetch(`${getApiBase()}/api/quiz-records`, { method: 'DELETE' });
+      const data = await res.json();
+      return data.count || 0;
+    }
+
+    const fb = await firestoreReady;
+    if (!fb) return 0;
+    const snap = await fb.fs.getDocs(fb.fs.collection(fb.db, COLLECTION));
     const deletes = [];
-    snap.forEach((d) => {
-      deletes.push(fs.deleteDoc(fs.doc(db, COLLECTION, d.id)));
-    });
+    snap.forEach((d) => deletes.push(fb.fs.deleteDoc(fb.fs.doc(fb.db, COLLECTION, d.id))));
     await Promise.all(deletes);
     return snap.size;
   }
 
-  /* ---------- User Accounts (Firestore collection "users") ---------- */
+  /* ---------- User Accounts API ---------- */
 
   async function saveUser(user) {
+    if (await checkSQLiteServer()) {
+      try {
+        const res = await fetch(`${getApiBase()}/api/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(user),
+        });
+        const data = await res.json();
+        if (res.ok) return { saved: true, id: data.user.id };
+        return { saved: false, error: new Error(data.error || 'Server error') };
+      } catch (e) {
+        return { saved: false, error: e };
+      }
+    }
+
     try {
-      const { db, fs } = await ready;
-      const ref = await fs.addDoc(fs.collection(db, USERS_COLLECTION), user);
+      const fb = await firestoreReady;
+      if (!fb) throw new Error('Database service unavailable');
+      const ref = await fb.fs.addDoc(fb.fs.collection(fb.db, USERS_COLLECTION), user);
       return { saved: true, id: ref.id };
     } catch (e) {
-      console.error('Firebase saveUser error:', e);
       return { saved: false, error: e };
     }
   }
 
   async function fetchUsers() {
-    const { db, fs } = await ready;
-    const snap = await fs.getDocs(fs.collection(db, USERS_COLLECTION));
+    if (await checkSQLiteServer()) {
+      const res = await fetch(`${getApiBase()}/api/users`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Could not fetch users from SQLite server');
+      return await res.json();
+    }
+
+    const fb = await firestoreReady;
+    if (!fb) return [];
+    const snap = await fb.fs.getDocs(fb.fs.collection(fb.db, USERS_COLLECTION));
     const users = [];
-    snap.forEach((d) => {
-      users.push({ firestoreId: d.id, ...d.data() });
-    });
+    snap.forEach((d) => users.push({ firestoreId: d.id, ...d.data() }));
     return users;
   }
 
   function subscribeUsers(callback, onError) {
-    let unsubscribe = () => {};
-    ready.then(({ db, fs }) => {
-      unsubscribe = fs.onSnapshot(
-        fs.collection(db, USERS_COLLECTION),
-        (snap) => {
-          const users = [];
-          snap.forEach((d) => users.push({ firestoreId: d.id, ...d.data() }));
-          callback(users);
-        },
-        (err) => {
-          console.error('Users snapshot error:', err);
-          if (onError) onError(err);
-        }
-      );
-    }).catch((err) => {
-      console.error('Users subscription failed:', err);
-      if (onError) onError(err);
+    let active = true;
+    checkSQLiteServer().then((isSQLite) => {
+      if (isSQLite) {
+        const poll = async () => {
+          if (!active) return;
+          try {
+            const users = await fetchUsers();
+            callback(users);
+          } catch (e) {
+            if (onError) onError(e);
+          }
+          if (active) setTimeout(poll, 3000);
+        };
+        poll();
+      } else {
+        firestoreReady.then((fb) => {
+          if (!fb) return;
+          fb.fs.onSnapshot(
+            fb.fs.collection(fb.db, USERS_COLLECTION),
+            (snap) => {
+              const users = [];
+              snap.forEach((d) => users.push({ firestoreId: d.id, ...d.data() }));
+              callback(users);
+            },
+            onError
+          );
+        });
+      }
     });
-    return () => unsubscribe();
+    return () => { active = false; };
   }
 
   async function deleteUser(id) {
+    if (await checkSQLiteServer()) {
+      try {
+        const res = await fetch(`${getApiBase()}/api/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const data = await res.json();
+        return Boolean(data.success);
+      } catch (e) {
+        return false;
+      }
+    }
+
     try {
-      const { db, fs } = await ready;
+      const fb = await firestoreReady;
+      if (!fb) return false;
       const targetStr = String(id);
-      const snap = await fs.getDocs(fs.collection(db, USERS_COLLECTION));
+      const snap = await fb.fs.getDocs(fb.fs.collection(fb.db, USERS_COLLECTION));
       let deleted = false;
       for (const d of snap.docs) {
         const data = d.data();
-        if (d.id === targetStr || String(data.id) === targetStr || String(data.firestoreId) === targetStr) {
-          await fs.deleteDoc(fs.doc(db, USERS_COLLECTION, d.id));
+        if (d.id === targetStr || String(data.id) === targetStr) {
+          await fb.fs.deleteDoc(fb.fs.doc(fb.db, USERS_COLLECTION, d.id));
           deleted = true;
         }
       }
       return deleted;
     } catch (e) {
-      console.error('Firebase deleteUser error:', e);
       return false;
     }
   }
 
   async function checkUserExists(username, email) {
+    if (await checkSQLiteServer()) {
+      try {
+        const res = await fetch(`${getApiBase()}/api/check-user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email }),
+        });
+        const data = await res.json();
+        return data.error || '';
+      } catch (e) {
+        throw e;
+      }
+    }
+
     try {
       const users = await fetchUsers();
       const uLower = String(username || '').trim().toLowerCase();
@@ -189,52 +311,69 @@
       if (takenEmail) return 'An account with this email is already registered in the database.';
       return '';
     } catch (e) {
-      console.error('Error checking user existence in Firestore:', e);
       throw e;
     }
   }
 
   async function findUser(identifier, password) {
+    if (await checkSQLiteServer()) {
+      try {
+        const res = await fetch(`${getApiBase()}/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier, password }),
+        });
+        if (res.status === 401) return null;
+        const data = await res.json();
+        if (data.role === 'student' && data.user) return data.user;
+        return null;
+      } catch (e) {
+        throw e;
+      }
+    }
+
     try {
       const users = await fetchUsers();
       const idLower = String(identifier || '').trim().toLowerCase();
-      const user = users.find(
+      return users.find(
         (u) =>
           (String(u.username || '').trim().toLowerCase() === idLower ||
            String(u.email || '').trim().toLowerCase() === idLower) &&
           u.password === password
-      );
-      return user || null;
+      ) || null;
     } catch (e) {
-      console.error('Error finding user in Firestore:', e);
       throw e;
     }
   }
 
-  /* One-time migration: flush any old pending records from localStorage to Firebase and purge */
   async function flushPending() {
     try {
-      const pendingRaw = localStorage.getItem('pending_quiz_records');
-      if (!pendingRaw) return 0;
-      const pending = JSON.parse(pendingRaw);
+      const raw = localStorage.getItem('pending_quiz_records');
+      if (!raw) return 0;
+      const pending = JSON.parse(raw);
       if (!Array.isArray(pending) || !pending.length) {
         localStorage.removeItem('pending_quiz_records');
         return 0;
       }
-      let uploaded = 0;
+      let count = 0;
       for (const rec of pending) {
         const res = await saveQuizRecord(rec);
-        if (res.saved) uploaded++;
+        if (res.saved) count++;
       }
       localStorage.removeItem('pending_quiz_records');
-      return uploaded;
+      return count;
     } catch (e) {
       return 0;
     }
   }
 
-  window.FirebaseService = {
-    info: { projectId: firebaseConfig.projectId, collection: COLLECTION, usersCollection: USERS_COLLECTION },
+  const service = {
+    info: {
+      get mode() { return useSQLite ? 'SQLite Database (database.sqlite)' : 'Cloud Firestore'; },
+      get projectId() { return useSQLite ? 'database.sqlite' : firebaseConfig.projectId; },
+      collection: COLLECTION,
+      usersCollection: USERS_COLLECTION,
+    },
     ready,
     saveQuizRecord,
     fetchQuizRecords,
@@ -253,5 +392,9 @@
     deleteUser,
     checkUserExists,
     findUser,
+    checkSQLiteServer,
   };
+
+  window.FirebaseService = service;
+  window.DataService = service;
 })();

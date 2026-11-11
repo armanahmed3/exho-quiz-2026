@@ -2,12 +2,21 @@
   "name": "exho-quiz-2026",
   "version": "1.0.0",
   "description": "Exhibition Quiz & Student Voting System - The Times School Network",
-  "main": "index.html",
+  "main": "server.js",
   "scripts": {
-    "start": "npx serve ."
+    "start": "node server.js",
+    "seed": "node seed_sqlite.js"
   },
-  "keywords": ["quiz", "exhibition", "voting", "school", "firebase"],
+  "keywords": [
+    "quiz",
+    "exhibition",
+    "voting",
+    "school",
+    "sqlite"
+  ],
   "author": "The Times School Network",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.3.0"
+  }
 }
-
