@@ -5,3 +5,7 @@ node_modules/
 .gemini/
 *-wal
 *-shm
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+server/*.sqlite*

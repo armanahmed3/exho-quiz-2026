@@ -1,0 +1,13 @@
+{
+  "name": "exho-quiz-server",
+  "version": "1.0.0",
+  "description": "Local SQLite server for exhibition quiz",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed_sqlite.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}
