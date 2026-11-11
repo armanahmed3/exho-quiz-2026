@@ -1,24 +1,26 @@
 /**
  * Firebase / Firestore service - the ONLY file that talks to Firebase.
  *
- * Same project, same SDK version, collections ("quiz_records", "users") and the
- * same document shape as the original index.html, so all existing data keeps
- * working. It is a classic script (not an ES module) on purpose: it loads the
- * SDK with dynamic import(), so the site still works when opened straight
- * from disk as well as from a web server.
+ * Connected dynamically to Firebase Firestore ("quiz_records" and "users" collections).
+ * All data is read and written directly to the cloud database with zero local storage dependence.
+ * Supports real-time dynamic snapshot listeners for live multi-device syncing.
  *
- * Exposes:  window.FirebaseService
- *   .ready                    Promise resolving once Firebase is initialised
- *   .saveQuizRecord(record)   -> addDoc(quiz_records)
- *   .fetchQuizRecords()       -> [{ id, ...data }]   (throws on failure)
- *   .clearQuizRecords()       -> deletes every doc in quiz_records
- *   .flushPending()           -> re-sends records that failed while offline
- *   .saveUser(userData)       -> addDoc(users)
- *   .fetchUsers()             -> [{ firestoreId, ...data }]
- *   .deleteUser(id)           -> deletes doc in users
+ * Exposes: window.FirebaseService
+ *   .ready                      Promise resolving with { db, fs, app }
+ *   .saveQuizRecord(record)     -> saves doc to Firestore collection "quiz_records"
+ *   .fetchQuizRecords()         -> [{ id, ...data }] directly from Firestore
+ *   .subscribeQuizRecords(fn)   -> real-time onSnapshot listener
+ *   .clearQuizRecords()         -> deletes all docs in "quiz_records" from Firestore
+ *   .saveUser(userData)         -> saves doc to Firestore collection "users"
+ *   .fetchUsers()               -> [{ firestoreId, ...data }] directly from Firestore
+ *   .subscribeUsers(fn)         -> real-time onSnapshot listener
+ *   .deleteUser(id)             -> deletes doc in "users" from Firestore
+ *   .findUser(identifier, pass) -> authenticates against Firestore users
+ *   .checkUserExists(user, eml) -> checks uniqueness directly in Firestore
+ *   .flushPending()             -> one-time migration of any legacy local pending records to Firestore
  */
 (function () {
-  const SDK = 'https://www.gstatic.com/firebasejs/13.2.0/';
+  const SDK = 'https://www.gstatic.com/firebasejs/11.0.1/';
   const COLLECTION = 'quiz_records';
   const USERS_COLLECTION = 'users';
 
@@ -32,133 +34,202 @@
     measurementId: 'G-66GYHXMSE6',
   };
 
-  function timeout(ms = 2500) {
-    return new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), ms));
-  }
-
   const ready = (async () => {
     try {
-      const [appMod, analyticsMod, fs] = await Promise.race([
-        Promise.all([
-          import(SDK + 'firebase-app.js'),
-          import(SDK + 'firebase-analytics.js'),
-          import(SDK + 'firebase-firestore.js'),
-        ]),
-        timeout(4000)
+      const [appMod, fs] = await Promise.all([
+        import(SDK + 'firebase-app.js'),
+        import(SDK + 'firebase-firestore.js'),
       ]);
       const app = appMod.initializeApp(firebaseConfig);
-      try { analyticsMod.getAnalytics(app); } catch (e) { console.warn('Analytics unavailable:', e.message); }
-      return { db: fs.getFirestore(app), fs };
+      try {
+        const analyticsMod = await import(SDK + 'firebase-analytics.js');
+        analyticsMod.getAnalytics(app);
+      } catch (e) {
+        // Analytics is optional in local or offline contexts
+      }
+      const db = fs.initializeFirestore
+        ? fs.initializeFirestore(app, { experimentalAutoDetectLongPolling: true })
+        : fs.getFirestore(app);
+      return { db, fs, app };
     } catch (e) {
-      console.warn('Firebase init warning:', e.message);
+      console.error('Firebase initialization error:', e);
       throw e;
     }
   })();
 
-  const readPending = () => {
-    try { return JSON.parse(localStorage.getItem(APP.KEYS.PENDING)) || []; } catch (e) { return []; }
-  };
-  const writePending = (list) => localStorage.setItem(APP.KEYS.PENDING, JSON.stringify(list));
-
-  async function addRecord(record) {
-    const { db, fs } = await Promise.race([ready, timeout(2500)]);
-    return Promise.race([
-      fs.addDoc(fs.collection(db, COLLECTION), record),
-      timeout(2500)
-    ]);
-  }
+  /* ---------- Quiz Records (Firestore collection "quiz_records") ---------- */
 
   async function saveQuizRecord(record) {
     try {
-      await addRecord(record);
-      return { saved: true };
+      const { db, fs } = await ready;
+      const docRef = await fs.addDoc(fs.collection(db, COLLECTION), record);
+      return { saved: true, id: docRef.id };
     } catch (e) {
-      console.error('Error saving record:', e);
-      writePending([...readPending(), record]); // never lose a student's result
+      console.error('Firebase saveQuizRecord error:', e);
       return { saved: false, error: e };
     }
   }
 
-  async function flushPending() {
-    const pending = readPending();
-    if (!pending.length) return 0;
-    const stillPending = [];
-    for (const rec of pending) {
-      try { await addRecord(rec); } catch (e) { stillPending.push(rec); }
-    }
-    writePending(stillPending);
-    return pending.length - stillPending.length;
-  }
-
   async function fetchQuizRecords() {
-    const { db, fs } = await Promise.race([ready, timeout(3000)]);
-    const snap = await Promise.race([
-      fs.getDocs(fs.collection(db, COLLECTION)),
-      timeout(3000)
-    ]);
+    const { db, fs } = await ready;
+    const snap = await fs.getDocs(fs.collection(db, COLLECTION));
     const records = [];
-    snap.forEach((d) => records.push({ id: d.id, ...d.data() }));
+    snap.forEach((d) => {
+      records.push({ firestoreDocId: d.id, ...d.data() });
+    });
     return records;
   }
 
+  function subscribeQuizRecords(callback, onError) {
+    let unsubscribe = () => {};
+    ready.then(({ db, fs }) => {
+      unsubscribe = fs.onSnapshot(
+        fs.collection(db, COLLECTION),
+        (snap) => {
+          const records = [];
+          snap.forEach((d) => records.push({ firestoreDocId: d.id, ...d.data() }));
+          callback(records);
+        },
+        (err) => {
+          console.error('Quiz records snapshot error:', err);
+          if (onError) onError(err);
+        }
+      );
+    }).catch((err) => {
+      console.error('Quiz records subscription failed:', err);
+      if (onError) onError(err);
+    });
+    return () => unsubscribe();
+  }
+
   async function clearQuizRecords() {
-    const { db, fs } = await Promise.race([ready, timeout(3000)]);
-    const snap = await Promise.race([
-      fs.getDocs(fs.collection(db, COLLECTION)),
-      timeout(3000)
-    ]);
-    for (const d of snap.docs) await fs.deleteDoc(fs.doc(db, COLLECTION, d.id));
+    const { db, fs } = await ready;
+    const snap = await fs.getDocs(fs.collection(db, COLLECTION));
+    const deletes = [];
+    snap.forEach((d) => {
+      deletes.push(fs.deleteDoc(fs.doc(db, COLLECTION, d.id)));
+    });
+    await Promise.all(deletes);
     return snap.size;
   }
 
-  /* ---------- User Accounts (Firebase Firestore) ---------- */
+  /* ---------- User Accounts (Firestore collection "users") ---------- */
+
   async function saveUser(user) {
     try {
-      const { db, fs } = await Promise.race([ready, timeout(2500)]);
-      const ref = await Promise.race([
-        fs.addDoc(fs.collection(db, USERS_COLLECTION), user),
-        timeout(2500)
-      ]);
+      const { db, fs } = await ready;
+      const ref = await fs.addDoc(fs.collection(db, USERS_COLLECTION), user);
       return { saved: true, id: ref.id };
     } catch (e) {
-      console.warn('Firebase saveUser fallback to local:', e.message);
+      console.error('Firebase saveUser error:', e);
       return { saved: false, error: e };
     }
   }
 
   async function fetchUsers() {
-    try {
-      const { db, fs } = await Promise.race([ready, timeout(2500)]);
-      const snap = await Promise.race([
-        fs.getDocs(fs.collection(db, USERS_COLLECTION)),
-        timeout(2500)
-      ]);
-      const users = [];
-      snap.forEach((d) => users.push({ firestoreId: d.id, ...d.data() }));
-      return users;
-    } catch (e) {
-      console.warn('Firebase fetchUsers fallback to local:', e.message);
-      return null;
-    }
+    const { db, fs } = await ready;
+    const snap = await fs.getDocs(fs.collection(db, USERS_COLLECTION));
+    const users = [];
+    snap.forEach((d) => {
+      users.push({ firestoreId: d.id, ...d.data() });
+    });
+    return users;
+  }
+
+  function subscribeUsers(callback, onError) {
+    let unsubscribe = () => {};
+    ready.then(({ db, fs }) => {
+      unsubscribe = fs.onSnapshot(
+        fs.collection(db, USERS_COLLECTION),
+        (snap) => {
+          const users = [];
+          snap.forEach((d) => users.push({ firestoreId: d.id, ...d.data() }));
+          callback(users);
+        },
+        (err) => {
+          console.error('Users snapshot error:', err);
+          if (onError) onError(err);
+        }
+      );
+    }).catch((err) => {
+      console.error('Users subscription failed:', err);
+      if (onError) onError(err);
+    });
+    return () => unsubscribe();
   }
 
   async function deleteUser(id) {
     try {
-      const { db, fs } = await Promise.race([ready, timeout(2500)]);
-      const snap = await Promise.race([
-        fs.getDocs(fs.collection(db, USERS_COLLECTION)),
-        timeout(2500)
-      ]);
+      const { db, fs } = await ready;
+      const targetStr = String(id);
+      const snap = await fs.getDocs(fs.collection(db, USERS_COLLECTION));
+      let deleted = false;
       for (const d of snap.docs) {
         const data = d.data();
-        if (d.id === String(id) || String(data.id) === String(id)) {
+        if (d.id === targetStr || String(data.id) === targetStr || String(data.firestoreId) === targetStr) {
           await fs.deleteDoc(fs.doc(db, USERS_COLLECTION, d.id));
+          deleted = true;
         }
       }
-      return true;
+      return deleted;
     } catch (e) {
-      console.warn('Firebase deleteUser error:', e.message);
+      console.error('Firebase deleteUser error:', e);
       return false;
+    }
+  }
+
+  async function checkUserExists(username, email) {
+    try {
+      const users = await fetchUsers();
+      const uLower = String(username || '').trim().toLowerCase();
+      const eLower = String(email || '').trim().toLowerCase();
+      const takenUser = users.some((u) => String(u.username || '').trim().toLowerCase() === uLower);
+      if (takenUser) return 'Username is already taken in the database. Please choose another.';
+      const takenEmail = users.some((u) => String(u.email || '').trim().toLowerCase() === eLower);
+      if (takenEmail) return 'An account with this email is already registered in the database.';
+      return '';
+    } catch (e) {
+      console.error('Error checking user existence in Firestore:', e);
+      throw e;
+    }
+  }
+
+  async function findUser(identifier, password) {
+    try {
+      const users = await fetchUsers();
+      const idLower = String(identifier || '').trim().toLowerCase();
+      const user = users.find(
+        (u) =>
+          (String(u.username || '').trim().toLowerCase() === idLower ||
+           String(u.email || '').trim().toLowerCase() === idLower) &&
+          u.password === password
+      );
+      return user || null;
+    } catch (e) {
+      console.error('Error finding user in Firestore:', e);
+      throw e;
+    }
+  }
+
+  /* One-time migration: flush any old pending records from localStorage to Firebase and purge */
+  async function flushPending() {
+    try {
+      const pendingRaw = localStorage.getItem('pending_quiz_records');
+      if (!pendingRaw) return 0;
+      const pending = JSON.parse(pendingRaw);
+      if (!Array.isArray(pending) || !pending.length) {
+        localStorage.removeItem('pending_quiz_records');
+        return 0;
+      }
+      let uploaded = 0;
+      for (const rec of pending) {
+        const res = await saveQuizRecord(rec);
+        if (res.saved) uploaded++;
+      }
+      localStorage.removeItem('pending_quiz_records');
+      return uploaded;
+    } catch (e) {
+      return 0;
     }
   }
 
@@ -167,11 +238,20 @@
     ready,
     saveQuizRecord,
     fetchQuizRecords,
+    subscribeQuizRecords,
     clearQuizRecords,
     flushPending,
-    pendingCount: () => readPending().length,
+    pendingCount: () => {
+      try {
+        const p = JSON.parse(localStorage.getItem('pending_quiz_records') || '[]');
+        return Array.isArray(p) ? p.length : 0;
+      } catch (e) { return 0; }
+    },
     saveUser,
     fetchUsers,
+    subscribeUsers,
     deleteUser,
+    checkUserExists,
+    findUser,
   };
 })();

@@ -1,6 +1,10 @@
-/** Admin > Voting Results: ranked teacher + sir vote bars. */
+/** Admin > Voting Results: ranked teacher + sir vote bars directly from Firebase Firestore. */
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (id) => document.getElementById(id);
+
+  const tBars = $('adminTeacherBars'), sBars = $('adminSirBars');
+  if (tBars) tBars.innerHTML = '<div class="text-center py-6 text-slate-400 font-medium"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading live teacher votes from Firebase...</div>';
+  if (sBars) sBars.innerHTML = '<div class="text-center py-6 text-slate-400 font-medium"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading live sir votes from Firebase...</div>';
   AdminData.mount(({ records }) => {
     const teachers = AdminData.ranked(records, 'votedTeacher', TEACHERS_LIST);
     const sirs = AdminData.ranked(records, 'votedSir', SIRS_LIST);

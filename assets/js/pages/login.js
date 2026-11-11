@@ -2,7 +2,7 @@
 (function () {
   const banner = document.getElementById('formBanner');
   const btn = document.getElementById('loginBtn');
-  const origBtnContent = btn ? btn.innerHTML : '<i class="fa-solid fa-right-from-bracket"></i><span>Login Now</span>';
+  const origBtnContent = btn ? btn.innerHTML : '<i class="fa-solid fa-right-to-bracket"></i><span>Login Now</span>';
 
   const MESSAGES = {
     login_required: 'Please log in first to access the quiz portal.',
@@ -26,7 +26,7 @@
 
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i><span>Logging In...</span>';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i><span>Verifying with Firebase...</span>';
       }
       FormKit.hide(banner);
 
@@ -55,7 +55,7 @@
           btn.disabled = false;
           btn.innerHTML = origBtnContent;
         }
-        FormKit.banner(banner, 'Could not log in. Check your internet connection and try again.', 'error');
+        FormKit.banner(banner, 'Could not log in: ' + (err.message || 'Check your internet connection.'), 'error');
       }
     },
   });

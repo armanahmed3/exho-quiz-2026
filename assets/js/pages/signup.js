@@ -1,4 +1,4 @@
-/** Sign-up page: validate, enforce unique username/email, store account, go to login. */
+/** Sign-up page: validate, enforce unique username/email, store account in Firebase, go to login. */
 (function () {
   const banner = document.getElementById('formBanner');
   const btn = document.getElementById('signupBtn');
@@ -8,7 +8,7 @@
     async onValid(v) {
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i><span>Registering User...</span>';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i><span>Registering in Firebase...</span>';
       }
       FormKit.hide(banner);
 
@@ -30,7 +30,7 @@
           return;
         }
 
-        FormKit.banner(banner, 'Account created successfully! Redirecting to login...', 'success');
+        FormKit.banner(banner, 'Account created in Firebase database! Redirecting to login...', 'success');
         form.reset();
         setTimeout(() => { location.href = 'login.html'; }, 800);
       } catch (err) {
@@ -39,7 +39,7 @@
           btn.disabled = false;
           btn.innerHTML = origBtnContent;
         }
-        FormKit.banner(banner, 'Could not complete registration. Please try again.', 'error');
+        FormKit.banner(banner, 'Could not complete registration: ' + (err.message || 'Check your internet connection.'), 'error');
       }
     },
   });

@@ -3,15 +3,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const $ = (id) => document.getElementById(id);
   let ranked = [], shown = [];
 
+  const tbody = $('adminResultsTableBody');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-slate-400 font-medium"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading live leaderboard from Firebase...</td></tr>';
+  }
+
   const render = () => {
     const q = $('fSearch').value.trim().toLowerCase(), cls = $('fClass').value, sub = $('fSubject').value, st = $('fStatus').value;
     shown = ranked.filter(({ r }) =>
       (!q || String(r.name).toLowerCase().includes(q)) && (!cls || r.class === cls) && (!sub || r.subject === sub) &&
-      (!st || (st === 'strong' ? r.score >= APP.HIGH_SCORE : r.score < APP.HIGH_SCORE)));
+      (!st || (st === 'strong' ? Number(r.score) >= APP.HIGH_SCORE : Number(r.score) < APP.HIGH_SCORE)));
     $('resultCount').innerText = `${shown.length} result${shown.length === 1 ? '' : 's'}`;
     $('adminResultsTableBody').innerHTML = shown.length
       ? shown.map(({ r, rank }) => AdminData.studentRow(r, rank)).join('')
-      : `<tr><td colspan="8" class="text-center text-slate-500">${ranked.length ? 'No students match these filters.' : 'No student quiz logs recorded yet.'}</td></tr>`;
+      : `<tr><td colspan="8" class="text-center text-slate-500">${ranked.length ? 'No students match these filters.' : 'No student quiz logs recorded in Firebase yet.'}</td></tr>`;
   };
 
   ['fSearch', 'fClass', 'fSubject', 'fStatus'].forEach((id) => $(id).addEventListener('input', render));

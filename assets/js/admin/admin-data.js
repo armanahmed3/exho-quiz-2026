@@ -1,84 +1,113 @@
-/** Data + aggregation helpers for the admin pages. All Firebase access goes through FirebaseService. */
+/**
+ * Data + aggregation helpers for admin pages.
+ * All data is loaded directly and dynamically from Firebase Firestore.
+ * Supports real-time dynamic sync so admin charts and tables update automatically.
+ */
 const AdminData = {
+  _currentRecords: [],
+  _currentUsers: [],
+
   async load() {
-    let records = [], error = null;
+    let records = [], users = [], error = null;
     try {
-      records = await FirebaseService.fetchQuizRecords();
-      if (Array.isArray(records)) {
-        localStorage.setItem('cached_quiz_records', JSON.stringify(records));
-      }
+      if (!window.FirebaseService) throw new Error('FirebaseService is not initialized.');
+      const [fetchedRecords, fetchedUsers] = await Promise.all([
+        FirebaseService.fetchQuizRecords(),
+        FirebaseService.fetchUsers(),
+      ]);
+      records = Array.isArray(fetchedRecords) ? fetchedRecords : [];
+      users = Array.isArray(fetchedUsers) ? fetchedUsers : [];
+      this._currentRecords = records;
+      this._currentUsers = users;
     } catch (e) {
       error = e;
-      console.error('Error fetching records from Firebase:', e);
-      // Fallback: load pending local records + cached records
-      try {
-        const cached = JSON.parse(localStorage.getItem('cached_quiz_records') || '[]');
-        const pending = JSON.parse(localStorage.getItem(APP.KEYS.PENDING) || '[]');
-        const map = new Map();
-        cached.forEach((r) => map.set(r.id, r));
-        pending.forEach((r) => map.set(r.id, r));
-        records = Array.from(map.values());
-      } catch (err) {
-        records = [];
-      }
+      console.error('Error fetching data from Firebase:', e);
     }
-    return { records, users: Auth.getUsers(), error };
+    return { records, users, error };
   },
 
-  /** Wires every [data-refresh] button + calls render(data) once now. */
+  /**
+   * Mounts admin page: loads initial live data, attaches real-time Firestore listeners,
+   * and wires up refresh buttons.
+   */
   async mount(render, errorEl) {
-    const run = async () => {
-      const data = await this.load();
+    const handleData = (records, users, error) => {
       if (errorEl) {
-        if (data.error) {
-          const isPerm = String(data.error.message || '').toLowerCase().includes('permission') ||
-                         String(data.error.code || '').toLowerCase().includes('permission');
-          const countMsg = data.records.length ? `Showing ${data.records.length} saved local submission(s). ` : '';
+        if (error) {
+          const isPerm = String(error.message || '').toLowerCase().includes('permission') ||
+                         String(error.code || '').toLowerCase().includes('permission');
           const msg = isPerm
-            ? `Firestore Permission Denied (Rules Expired). ${countMsg}To connect live Firebase, update your Firestore Security Rules in Firebase Console to 'allow read, write: if true;'.`
-            : `Could not load quiz records from Firebase. ${countMsg}Check your internet connection and Firestore rules, then press Refresh.`;
-          FormKit.banner(errorEl, msg, data.records.length ? 'info' : 'error');
+            ? 'Firestore Permission Denied. Please ensure your Firestore Security Rules allow read/write.'
+            : 'Could not connect to Firebase database. Please check your internet connection and Firestore rules.';
+          FormKit.banner(errorEl, msg, 'error');
         } else {
           FormKit.hide(errorEl);
         }
       }
-      render(data);
+      render({ records, users, error });
     };
-    document.querySelectorAll('[data-refresh]').forEach((b) => b.addEventListener('click', run));
+
+    const run = async () => {
+      const data = await this.load();
+      handleData(data.records, data.users, data.error);
+    };
+
+    // 1. Initial live fetch
     await run();
+
+    // 2. Real-time dynamic Firestore subscriptions (instant sync on submission or user change)
+    if (window.FirebaseService) {
+      FirebaseService.subscribeQuizRecords((records) => {
+        this._currentRecords = records;
+        handleData(this._currentRecords, this._currentUsers, null);
+      }, (err) => console.warn('Real-time quiz subscription warning:', err));
+
+      FirebaseService.subscribeUsers((users) => {
+        this._currentUsers = users;
+        handleData(this._currentRecords, this._currentUsers, null);
+      }, (err) => console.warn('Real-time users subscription warning:', err));
+    }
+
+    // 3. Manual refresh buttons
+    document.querySelectorAll('[data-refresh]').forEach((b) => b.addEventListener('click', run));
   },
 
   stats(records, users) {
     const total = records.length;
     const avg = total ? (records.reduce((a, r) => a + (Number(r.score) || 0), 0) / total).toFixed(1) : '0';
-    const high = records.filter((r) => r.score >= APP.HIGH_SCORE).length;
+    const high = records.filter((r) => Number(r.score) >= APP.HIGH_SCORE).length;
     return { users: users.length, total, avg, high, other: total - high };
   },
 
   voteCounts(records, key, list) {
     const counts = Object.fromEntries(list.map((n) => [n, 0]));
-    records.forEach((r) => { if (r[key] && counts[r[key]] !== undefined) counts[r[key]]++; });
+    records.forEach((r) => {
+      if (r[key] && counts[r[key]] !== undefined) counts[r[key]]++;
+    });
     return counts;
   },
 
   ranked(records, key, list) {
     const counts = this.voteCounts(records, key, list);
     return list.slice().sort((a, b) => counts[b] - counts[a]).map((name) => ({
-      name, count: counts[name], pct: Math.round((counts[name] / (records.length || 1)) * 100),
+      name,
+      count: counts[name],
+      pct: Math.round((counts[name] / (records.length || 1)) * 100),
     }));
   },
 
-  leaderboard: (records) => records.slice().sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : 1)),
+  leaderboard: (records) =>
+    records.slice().sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || (a.id < b.id ? -1 : 1)),
 
   statusBadge(score) {
-    return score >= APP.HIGH_SCORE
+    return Number(score) >= APP.HIGH_SCORE
       ? '<span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300 text-xs font-bold whitespace-nowrap"><i class="fa-solid fa-circle-check mr-1"></i>Strong (≥8)</span>'
       : '<span class="px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 border border-rose-300 text-xs font-bold whitespace-nowrap"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Needs Improvement (&lt;8)</span>';
   },
 
   /** One <tr> of the student table. Every Firestore value is escaped. */
   studentRow(r, rank) {
-    const color = r.score >= APP.HIGH_SCORE ? 'text-emerald-600' : 'text-rose-600';
+    const color = Number(r.score) >= APP.HIGH_SCORE ? 'text-emerald-600' : 'text-rose-600';
     return `<tr>
       <td class="font-mono text-xs font-bold text-slate-500">#${rank}</td>
       <td class="font-bold text-slate-800 whitespace-nowrap">${Utils.esc(r.name)}</td>
@@ -93,7 +122,7 @@ const AdminData = {
   statCard(id, label, color, icon) {
     return `<div class="glass-card p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-3 min-w-0">
       <div class="min-w-0"><p class="text-[10px] sm:text-xs uppercase tracking-wider text-slate-500 font-bold truncate">${label}</p>
-      <h3 id="${id}" class="text-2xl sm:text-3xl font-display font-extrabold text-${color}-600 mt-1 truncate">0</h3></div>
+      <h3 id="${id}" class="text-2xl sm:text-3xl font-display font-extrabold text-${color}-600 mt-1 truncate"><span class="animate-pulse text-xl text-slate-400">...</span></h3></div>
       <div class="p-2.5 sm:p-3 rounded-xl bg-${color}-50 text-${color}-600 text-xl sm:text-2xl shrink-0"><i class="fa-solid ${icon}"></i></div></div>`;
   },
 

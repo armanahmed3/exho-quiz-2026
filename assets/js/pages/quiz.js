@@ -1,6 +1,6 @@
 /**
  * Student quiz flow: register -> instructions -> quiz (90s) -> result -> vote -> finish.
- * Results are saved to Firebase through FirebaseService (same "quiz_records" collection as before).
+ * Results and votes are saved directly and dynamically to Firebase Firestore ("quiz_records").
  * Functions used by inline onclick="" attributes in quiz.html stay global on purpose.
  */
 const state = {
@@ -229,7 +229,7 @@ async function submitTeacherVote() {
   state.saving = true;
   const btn = $('btnCastVote');
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting...';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting to Firebase...';
 
   const result = await FirebaseService.saveQuizRecord(record);
 
@@ -238,8 +238,11 @@ async function submitTeacherVote() {
   btn.innerHTML = '<i class="fa-solid fa-thumbs-up"></i><span>Submit Both Votes & Finish</span>';
 
   const note = $('syncNote');
-  if (result.saved) note.className = 'hidden';
-  else FormKit.banner(note, 'Saved on this device - it will upload automatically when the internet is back.', 'info');
+  if (result.saved) {
+    note.className = 'hidden';
+  } else {
+    FormKit.banner(note, 'Database note: Could not save to Firebase. ' + (result.error ? result.error.message : 'Please check connection.'), 'error');
+  }
   showView('view-finish');
 }
 
@@ -248,6 +251,15 @@ function resetApp() {
   registerForm.reset();
   $('inputSubject').value = '';
   document.querySelectorAll('#subjectGrid .mcq-option').forEach((el) => el.classList.remove('selected'));
+
+  if (typeof Auth !== 'undefined') {
+    const student = Auth.currentStudent();
+    if (student) {
+      const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.username;
+      if (fullName && $('inputName')) $('inputName').value = fullName;
+    }
+  }
+
   showView('view-landing');
 }
 
@@ -256,6 +268,19 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSubjectCards();
   renderVotingGrids();
   registerForm = FormKit.attach($('registerForm'), { onValid: onRegistered });
-  FirebaseService.flushPending().catch(() => {}); // upload anything saved while offline earlier
+
+  if (typeof Auth !== 'undefined') {
+    const student = Auth.currentStudent();
+    if (student) {
+      const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.username;
+      if (fullName && $('inputName')) {
+        $('inputName').value = fullName;
+      }
+    }
+  }
+
+  if (window.FirebaseService) {
+    FirebaseService.flushPending().catch(() => {});
+  }
   window.addEventListener('beforeunload', (e) => { if (state.quizActive) { e.preventDefault(); e.returnValue = ''; } });
 });
