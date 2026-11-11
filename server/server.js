@@ -10,8 +10,8 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname)));
+// Serve static frontend files from project root
+app.use(express.static(path.join(__dirname, '..')));
 
 // Admin credentials
 const ADMIN_USERNAME = 'admin';
@@ -161,7 +161,7 @@ app.delete('/api/quiz-records', (req, res) => {
 
 // Fallback route for SPA / root
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
 // Helper to get local network IP
